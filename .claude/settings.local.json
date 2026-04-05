@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter create:*)",
+      "Read(//c/Users/rubem/AppData/Local/**)",
+      "Read(//c/Users/rubem/**)",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(mkdir -p \"/c/Users/rubem/source/repos/SportConnect/sport_connect/lib/core/network\")",
+      "Bash(mkdir -p \"/c/Users/rubem/source/repos/SportConnect/sport_connect/lib/core/storage\")",
+      "Bash(mkdir -p \"/c/Users/rubem/source/repos/SportConnect/sport_connect/lib/core/router\")",
+      "Bash(mkdir -p \"/c/Users/rubem/source/repos/SportConnect/sport_connect/lib/core/theme\")",
+      "Bash(mkdir -p \"/c/Users/rubem/source/repos/SportConnect/sport_connect/lib/core/utils\")"
+    ]
+  }
+}

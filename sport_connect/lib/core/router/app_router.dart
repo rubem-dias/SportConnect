@@ -21,11 +21,12 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   final authState = ref.watch(authStateProvider);
+  final devBypassAuth = ref.watch(devBypassAuthProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
     redirect: (context, state) {
-      final isLoggedIn = authState.valueOrNull != null;
+      final isLoggedIn = authState.valueOrNull != null || devBypassAuth;
       final isAuthRoute = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register ||
           state.matchedLocation == AppRoutes.onboarding ||

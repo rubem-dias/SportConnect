@@ -140,10 +140,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 2  
 **Dependências:** TASK-006
 
-- [ ] `UserModel` (id, email, name, avatar, sports, level, createdAt)
-- [ ] `AuthTokenModel` (accessToken, refreshToken, expiresAt)
-- [ ] `AuthRepository` interface + implementação HTTP
-- [ ] Provider `authStateProvider` com `AsyncNotifier<UserModel?>`
+- [x] `UserModel` (id, email, name, avatar, sports, level, createdAt)
+- [x] `AuthTokenModel` (accessToken, refreshToken, expiresAt)
+- [x] `AuthRepository` interface + implementação HTTP
+- [x] Provider `authStateProvider` com `AsyncNotifier<UserModel?>`
 
 **Aceite:** Models gerados pelo `freezed` sem warnings
 
@@ -153,14 +153,14 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-008, TASK-004
 
-- [ ] Layout: logo centralizado, campos e-mail + senha, botão entrar
-- [ ] Botões de social login (Google, Apple) — visual apenas nesta task
-- [ ] Link "Esqueci minha senha"
-- [ ] Link "Criar conta"
-- [ ] Validação local dos campos antes do request
-- [ ] Loading state no botão durante request
-- [ ] Tratamento de erros (credenciais inválidas, sem conexão)
-- [ ] Navegação pós-login para Home
+- [x] Layout: logo centralizado, campos e-mail + senha, botão entrar
+- [x] Botões de social login (Google, Apple) — visual apenas nesta task
+- [x] Link "Esqueci minha senha"
+- [x] Link "Criar conta"
+- [x] Validação local dos campos antes do request
+- [x] Loading state no botão durante request
+- [x] Tratamento de erros (credenciais inválidas, sem conexão)
+- [x] Navegação pós-login para Home
 
 **Aceite:** Login com credenciais válidas navega para Home; erro exibe snackbar correto
 
@@ -170,11 +170,11 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-008, TASK-004
 
-- [ ] Step 1: Nome, e-mail, senha, confirmação de senha
-- [ ] Step 2: Foto de perfil (opcional), username
-- [ ] Validações: e-mail único (check assíncrono), senha forte, username disponível
-- [ ] Progress indicator de steps
-- [ ] Navegar para Onboarding após registro
+- [x] Step 1: Nome, e-mail, senha, confirmação de senha
+- [x] Step 2: Foto de perfil (opcional), username
+- [x] Validações: e-mail único (check assíncrono), senha forte, username disponível
+- [x] Progress indicator de steps
+- [x] Navegar para Onboarding após registro
 
 **Aceite:** Registro completo cria usuário no back-end e persiste token
 
@@ -184,12 +184,12 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-010
 
-- [ ] Step 1: Selecionar esportes de interesse (multi-select com ícones)
-- [ ] Step 2: Nível de condicionamento (Iniciante / Intermediário / Avançado)
-- [ ] Step 3: Objetivo principal (Hipertrofia, Emagrecimento, Performance, Saúde)
-- [ ] Step 4: Localização (para Nearby) — opt-in com explicação clara
-- [ ] Skip possível em cada step
-- [ ] Salvar preferências no perfil
+- [x] Step 1: Selecionar esportes de interesse (multi-select com ícones)
+- [x] Step 2: Nível de condicionamento (Iniciante / Intermediário / Avançado)
+- [x] Step 3: Objetivo principal (Hipertrofia, Emagrecimento, Performance, Saúde)
+- [x] Step 4: Localização (para Nearby) — opt-in com explicação clara
+- [x] Skip possível em cada step
+- [x] Salvar preferências no perfil
 
 **Aceite:** Onboarding completo persiste preferências e navega para Home
 
@@ -199,10 +199,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-009
 
-- [ ] Integrar `google_sign_in` package
-- [ ] Integrar `sign_in_with_apple` package
-- [ ] Enviar token social para `POST /auth/social/{provider}`
-- [ ] Tratar conta já existente vs novo usuário (onboarding condicional)
+- [x] Integrar `google_sign_in` package
+- [x] Integrar `sign_in_with_apple` package
+- [x] Enviar token social para `POST /auth/social/{provider}`
+- [x] Tratar conta já existente vs novo usuário (onboarding condicional)
 - [ ] Configurar OAuth apps no Google Cloud Console e Apple Developer
 
 **Aceite:** Login Google e Apple funciona em device físico iOS e Android
@@ -213,10 +213,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 3  
 **Dependências:** TASK-008
 
-- [ ] Salvar tokens em `flutter_secure_storage` (não SharedPreferences)
-- [ ] Auto-login ao abrir o app se token válido
-- [ ] Tela de splash com verificação de sessão
-- [ ] Logout: limpar storage + invalidar token no back-end + redirecionar
+- [x] Salvar tokens em `flutter_secure_storage` (não SharedPreferences)
+- [x] Auto-login ao abrir o app se token válido
+- [x] Tela de splash com verificação de sessão
+- [x] Logout: limpar storage + invalidar token no back-end + redirecionar
 
 **Aceite:** App abre logado após fechar; logout limpa tudo
 
@@ -228,10 +228,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 3  
 **Dependências:** TASK-006
 
-- [ ] `PostModel` (id, userId, content, mediaUrls, exerciseData, prData, reactions, commentsCount, createdAt)
-- [ ] `FeedRepository` com paginação cursor-based
-- [ ] `feedProvider` com `AsyncNotifier` + `refresh()` e `loadMore()`
-- [ ] Cache local de feed (Hive) para offline
+- [x] `PostModel` (id, userId, content, mediaUrls, exerciseData, prData, reactions, commentsCount, createdAt)
+- [x] `FeedRepository` com paginação cursor-based
+- [x] `feedProvider` com `AsyncNotifier` + `refresh()` e `loadMore()`
+- [x] Cache local de feed (Hive) para offline
 
 **Aceite:** Provider carrega posts paginados e atualiza ao fazer pull-to-refresh
 

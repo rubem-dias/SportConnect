@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -23,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isSocialFlow = false;
 
   @override
   void dispose() {
@@ -33,6 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    _isSocialFlow = false;
 
     await ref.read(authStateProvider.notifier).login(
           email: _emailController.text.trim(),
@@ -47,12 +50,79 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  Future<void> _googleLogin() async {
+    try {
+      _isSocialFlow = true;
+      final account = await GoogleSignIn(scopes: const ['email']).signIn();
+      if (!mounted) return;
+      if (account == null) return;
+
+      final auth = await account.authentication;
+      if (!mounted) return;
+      final token = auth.idToken ?? auth.accessToken;
+      if (token == null || token.isEmpty) {
+        AppSnackbar.error(context, 'Nao foi possivel obter token do Google.');
+        return;
+      }
+
+      await ref
+          .read(authStateProvider.notifier)
+          .socialLogin(provider: 'google', token: token);
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackbar.error(context, e.toString());
+    }
+  }
+
+  Future<void> _appleLogin() async {
+    final isAvailable = await SignInWithApple.isAvailable();
+    if (!mounted) return;
+    if (!isAvailable) {
+      AppSnackbar.info(context, 'Apple Sign In indisponivel neste dispositivo.');
+      return;
+    }
+
+    try {
+      _isSocialFlow = true;
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      if (!mounted) return;
+
+      final token = credential.identityToken;
+      if (token == null || token.isEmpty) {
+        AppSnackbar.error(context, 'Nao foi possivel obter token da Apple.');
+        return;
+      }
+
+      await ref
+          .read(authStateProvider.notifier)
+          .socialLogin(provider: 'apple', token: token);
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackbar.error(context, e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(authStateProvider, (_, next) {
       next.whenOrNull(
         data: (user) {
-          if (user != null) context.go(AppRoutes.feed);
+          if (user == null) return;
+
+          if (_isSocialFlow) {
+            final hasOnboardingData =
+                user.sports.isNotEmpty && user.level.isNotEmpty;
+            context.go(hasOnboardingData ? AppRoutes.feed : AppRoutes.onboarding);
+            _isSocialFlow = false;
+            return;
+          }
+
+          context.go(AppRoutes.feed);
         },
       );
     });
@@ -163,6 +233,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: isLoading,
                 ),
 
+                const SizedBox(height: AppSpacing.sm),
+
+                AppButton(
+                  label: 'Entrar em modo teste',
+                  variant: AppButtonVariant.secondary,
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          ref.read(devBypassAuthProvider.notifier).state = true;
+                          context.go(AppRoutes.feed);
+                        },
+                ),
+
                 const SizedBox(height: AppSpacing.lg),
 
                 // Divisor
@@ -193,7 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: _SocialButton(
                         label: 'Google',
                         icon: Icons.g_mobiledata,
-                        onPressed: () {},
+                        onPressed: isLoading ? null : _googleLogin,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -201,7 +284,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: _SocialButton(
                         label: 'Apple',
                         icon: Icons.apple,
-                        onPressed: () {},
+                        onPressed: isLoading ? null : _appleLogin,
                       ),
                     ),
                   ],
@@ -241,7 +324,7 @@ class _SocialButton extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

@@ -6,6 +6,8 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 
 part 'auth_provider.g.dart';
 
+final devBypassAuthProvider = StateProvider<bool>((ref) => false);
+
 @riverpod
 class AuthState extends _$AuthState {
   @override
@@ -33,6 +35,19 @@ class AuthState extends _$AuthState {
       final result = await ref
           .read(authRepositoryProvider)
           .register(name: name, email: email, password: password);
+      return result.user;
+    });
+  }
+
+  Future<void> socialLogin({
+    required String provider,
+    required String token,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final result = await ref
+          .read(authRepositoryProvider)
+          .socialLogin(provider: provider, token: token);
       return result.user;
     });
   }

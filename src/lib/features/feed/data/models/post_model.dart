@@ -9,6 +9,8 @@ class PostModel {
     required this.reactions,
     required this.commentsCount,
     required this.createdAt,
+    this.userName,
+    this.userAvatar,
   });
 
   final String id;
@@ -20,6 +22,8 @@ class PostModel {
   final Map<String, int> reactions;
   final int commentsCount;
   final DateTime createdAt;
+  final String? userName;
+  final String? userAvatar;
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
     final rawReactions = json['reactions'];
@@ -50,6 +54,9 @@ class PostModel {
       commentsCount: (json['commentsCount'] as num?)?.toInt() ?? 0,
       createdAt:
           DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      userName: json['userName']?.toString() ?? json['user']?['name']?.toString(),
+      userAvatar:
+          json['userAvatar']?.toString() ?? json['user']?['avatar']?.toString(),
     );
   }
 
@@ -64,6 +71,8 @@ class PostModel {
       'reactions': reactions,
       'commentsCount': commentsCount,
       'createdAt': createdAt.toIso8601String(),
+      if (userName != null) 'userName': userName,
+      if (userAvatar != null) 'userAvatar': userAvatar,
     };
   }
 }

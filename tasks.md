@@ -241,17 +241,17 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-014, TASK-004
 
-- [ ] `CustomScrollView` com `SliverList` (performance em listas longas)
-- [ ] Pull-to-refresh com indicador estilizado
-- [ ] Infinite scroll com skeleton no final da lista
-- [ ] `PostCard` widget:
+- [x] `CustomScrollView` com `SliverList` (performance em listas longas)
+- [x] Pull-to-refresh com indicador estilizado
+- [x] Infinite scroll com skeleton no final da lista
+- [x] `PostCard` widget:
   - Avatar + nome + tempo relativo (ex: "há 3h")
   - Texto do post com "ver mais" em posts longos
   - Grid de fotos (1, 2, 3, 4+ imagens)
   - Barra de reactions (🔥 💪 🏆) com contagem
   - Botão comentar e compartilhar
-- [ ] `PRCard` widget destacado (quando post é um PR) — fundo verde com badge 🏆
-- [ ] Estado vazio (primeiro uso) com sugestão de seguir pessoas
+- [x] `PRCard` widget destacado (quando post é um PR) — fundo verde com badge 🏆
+- [x] Estado vazio (primeiro uso) com sugestão de seguir pessoas
 
 **Aceite:** Feed rola fluido (60fps), PRs se destacam visualmente, offline mostra cache
 

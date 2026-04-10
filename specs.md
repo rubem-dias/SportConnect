@@ -1,7 +1,7 @@
 # SportConnect — Especificação do Projeto
 
 > **Nome sugerido:** `SportConnect` (substitui GymConnected para cobrir academia + outros esportes)  
-> **Repositório atual:** `GymConnected/`  
+> **Repositório atual:** `SportConnect/` · Flutter em `src/`  
 > **Versão:** 1.0 — Draft inicial
 
 ---

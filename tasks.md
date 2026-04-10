@@ -29,7 +29,7 @@
 **Pontos:** 3  
 **Dependências:** nenhuma
 
-- [x] `flutter create sport_connect --org com.sportconnect`
+- [x] `flutter create sport_connect --org com.sportconnect` (pasta renomeada para `src/`)
 - [x] Configurar estrutura de pastas conforme SPEC (features/, core/, shared/)
 - [x] Adicionar `.gitignore` específico para Flutter
 - [x] Configurar `analysis_options.yaml` com regras lint rigorosas

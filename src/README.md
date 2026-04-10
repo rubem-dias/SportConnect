@@ -1,6 +1,6 @@
-# sport_connect
+# SportConnect
 
-A new Flutter project.
+Pasta do projeto Flutter (`src/`).
 
 ## Getting Started
 

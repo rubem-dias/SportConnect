@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -61,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       final token = auth.idToken ?? auth.accessToken;
       if (token == null || token.isEmpty) {
-        AppSnackbar.error(context, 'Nao foi possivel obter token do Google.');
+        AppSnackbar.error(context, context.l10n.loginGoogleError);
         return;
       }
 
@@ -78,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isAvailable = await SignInWithApple.isAvailable();
     if (!mounted) return;
     if (!isAvailable) {
-      AppSnackbar.info(context, 'Apple Sign In indisponivel neste dispositivo.');
+      AppSnackbar.info(context, context.l10n.loginAppleUnavailable);
       return;
     }
 
@@ -94,7 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final token = credential.identityToken;
       if (token == null || token.isEmpty) {
-        AppSnackbar.error(context, 'Nao foi possivel obter token da Apple.');
+        AppSnackbar.error(context, context.l10n.loginAppleError);
         return;
       }
 
@@ -109,6 +110,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     ref.listen(authStateProvider, (_, next) {
       next.whenOrNull(
         data: (user) {
@@ -127,8 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     });
 
-    final isLoading =
-        ref.watch(authStateProvider).isLoading;
+    final isLoading = ref.watch(authStateProvider).isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -171,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Conecte-se com sua comunidade esportiva',
+                        l10n.loginTitle,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.textSecondaryLight,
                         ),
@@ -186,13 +188,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Email
                 AppTextField(
                   controller: _emailController,
-                  label: 'E-mail',
+                  label: l10n.loginEmailLabel,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.email_outlined),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Informe o e-mail';
+                    if (v == null || v.isEmpty) return l10n.loginEmailHint;
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-                      return 'E-mail inválido';
+                      return l10n.loginEmailInvalid;
                     }
                     return null;
                   },
@@ -203,12 +205,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Senha
                 AppTextField(
                   controller: _passwordController,
-                  label: 'Senha',
+                  label: l10n.loginPasswordLabel,
                   isPassword: true,
                   prefixIcon: const Icon(Icons.lock_outline),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Informe a senha';
-                    if (v.length < 6) return 'Mínimo 6 caracteres';
+                    if (v == null || v.isEmpty) return l10n.loginPasswordHint;
+                    if (v.length < 6) return l10n.loginPasswordMin;
                     return null;
                   },
                 ),
@@ -220,7 +222,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {},
-                    child: const Text('Esqueci minha senha'),
+                    child: Text(l10n.loginForgotPassword),
                   ),
                 ),
 
@@ -228,7 +230,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Botão entrar
                 AppButton(
-                  label: 'Entrar',
+                  label: l10n.loginButton,
                   onPressed: isLoading ? null : _submit,
                   isLoading: isLoading,
                 ),
@@ -257,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         horizontal: AppSpacing.sm,
                       ),
                       child: Text(
-                        'ou continue com',
+                        l10n.loginOr,
                         style: AppTypography.bodySmall.copyWith(
                           color: AppColors.textSecondaryLight,
                         ),
@@ -297,12 +299,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Não tem conta? ',
+                      l10n.loginNoAccount,
                       style: AppTypography.bodyMedium,
                     ),
                     TextButton(
                       onPressed: () => context.push(AppRoutes.register),
-                      child: const Text('Criar conta'),
+                      child: Text(l10n.loginCreateAccount),
                     ),
                   ],
                 ),

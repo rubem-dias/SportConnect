@@ -11,19 +11,19 @@
 **Prioridade:** BLOCKER — todas as outras dependem desta  
 **Esforço:** P (pequeno)
 
-- [ ] Criar `src/l10n.yaml` com `arb-dir`, `template-arb-file` e `output-class`
-- [ ] Criar `src/l10n/app_pt.arb` (arquivo base)
-- [ ] Criar `src/l10n/app_en.arb` (arquivo de tradução)
-- [ ] Adicionar `generate: true` e `flutter_localizations` no `pubspec.yaml`
-- [ ] Configurar `localizationsDelegates` e `supportedLocales` no `app.dart`
-- [ ] Criar extensão `BuildContext.l10n` em `core/extensions/` para acesso conveniente
-- [ ] Rodar `flutter gen-l10n` e confirmar que a classe `AppLocalizations` é gerada sem erro
+- [x] Criar `src/l10n.yaml` com `arb-dir`, `template-arb-file` e `output-class`
+- [x] Criar `src/l10n/app_pt.arb` (arquivo base)
+- [x] Criar `src/l10n/app_en.arb` (arquivo de tradução)
+- [x] Adicionar `generate: true` e `flutter_localizations` no `pubspec.yaml`
+- [x] Configurar `localizationsDelegates` e `supportedLocales` no `app.dart`
+- [x] Criar extensão `BuildContext.l10n` em `core/extensions/` para acesso conveniente
+- [x] Rodar `flutter gen-l10n` e confirmar que a classe `AppLocalizations` é gerada sem erro
 
 ---
 
 ## E02 — Autenticação
 
-### TASK-I18N-001 · login_screen.dart
+### ✅ TASK-I18N-001 · login_screen.dart
 **Esforço:** P  
 **Strings a extrair (~15):**
 

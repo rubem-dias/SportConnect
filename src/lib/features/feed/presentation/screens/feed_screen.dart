@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -75,10 +76,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   SliverFillRemaining(
                     child: AppEmptyState(
                       icon: Icons.people_outline_rounded,
-                      title: 'Seu feed está vazio',
-                      subtitle:
-                          'Siga pessoas e comunidades para ver posts aqui.',
-                      actionLabel: 'Explorar',
+                      title: context.l10n.feedEmptyTitle,
+                      subtitle: context.l10n.feedEmptySubtitle,
+                      actionLabel: context.l10n.feedEmptyAction,
                       onAction: () {},
                     ),
                   ),
@@ -259,15 +259,15 @@ class _FeedError extends StatelessWidget {
               color: AppColors.textDisabledLight,
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Text(
-              'Não foi possível carregar o feed',
+            Text(
+              context.l10n.feedErrorMessage,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),
             TextButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Tentar novamente'),
+              label: Text(context.l10n.feedRetry),
             ),
           ],
         ),

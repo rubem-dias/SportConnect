@@ -356,11 +356,11 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-021
 
-- [ ] Tela de detalhe de exercício com histórico cronológico
-- [ ] Gráfico de linha (`fl_chart`) mostrando evolução no tempo
-- [ ] Filtros de período: 1M, 3M, 6M, 1A, Tudo
-- [ ] Linha de tendência suavizada
-- [ ] Anotações no gráfico nos pontos de PR
+- [x] Tela de detalhe de exercício com histórico cronológico
+- [x] Gráfico de linha (`fl_chart`) mostrando evolução no tempo
+- [x] Filtros de período: 1M, 3M, 6M, 1A, Tudo
+- [x] Linha de tendência suavizada
+- [x] Anotações no gráfico nos pontos de PR
 - [ ] Comparativo anônimo com média da comunidade (linha pontilhada)
 
 **Aceite:** Gráfico renderiza corretamente com 100+ pontos sem travar
@@ -373,10 +373,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 3  
 **Dependências:** TASK-006
 
-- [ ] `GoalModel` (id, type, title, target, unit, current, startDate, endDate, isPublic)
-- [ ] Tipos: peso corporal, PR específico, frequência semanal, distância mensal
-- [ ] `GoalRepository`: CRUD + check-in
-- [ ] Check-in automático ao registrar PR vinculado à meta
+- [x] `GoalModel` (id, type, title, target, unit, current, startDate, endDate, isPublic)
+- [x] Tipos: peso corporal, PR específico, frequência semanal, distância mensal
+- [x] `GoalRepository`: CRUD + check-in
+- [x] Check-in automático ao registrar PR vinculado à meta
 
 **Aceite:** Meta de PR atualiza progresso automaticamente ao registrar PR
 
@@ -386,16 +386,16 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-023, TASK-004
 
-- [ ] Cards de metas ativas com progress bar animada
-- [ ] Categorias: Em andamento / Concluídas / Expiradas
-- [ ] Card de meta:
+- [x] Cards de metas ativas com progress bar animada
+- [x] Categorias: Em andamento / Concluídas / Expiradas
+- [x] Card de meta:
   - Título + ícone de tipo
   - Progress bar com porcentagem
   - Dias restantes
   - Último check-in
-- [ ] Tela de criação de meta (multi-step: tipo → valor → prazo → visibilidade)
-- [ ] Animação de confetti ao completar meta 🎊
-- [ ] Arquivar meta concluída
+- [x] Tela de criação de meta (multi-step: tipo → valor → prazo → visibilidade)
+- [x] Animação de confetti ao completar meta 🎊
+- [x] Arquivar meta concluída
 
 **Aceite:** Progress bar anima ao entrar na tela; confetti ao bater 100%
 

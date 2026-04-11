@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/extensions/l10n_extension.dart';
+
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -71,7 +73,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedExercise == null) {
-      AppSnackbar.error(context, 'Selecione um exercício');
+      AppSnackbar.error(context, context.l10n.addPrNoExercise);
       return;
     }
 
@@ -104,12 +106,12 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
         HapticFeedback.heavyImpact();
         await _showCelebrationDialog(pr);
       } else {
-        AppSnackbar.success(context, 'PR registrado!');
+        AppSnackbar.success(context, context.l10n.addPrSuccess);
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        AppSnackbar.error(context, 'Erro ao salvar PR. Tente novamente.');
+        AppSnackbar.error(context, context.l10n.addPrError);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -143,7 +145,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
               isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
           appBar: AppBar(
             title: Text(
-              widget.editPR != null ? 'Editar PR' : 'Registrar PR',
+              widget.editPR != null ? context.l10n.editPrTitle : context.l10n.addPrTitle,
             ),
             actions: [
               if (widget.editPR != null)
@@ -160,7 +162,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
                 // Exercise picker
-                _SectionLabel('Exercício'),
+                _SectionLabel(context.l10n.addPrExerciseSection),
                 _ExercisePicker(
                   selected: _selectedExercise,
                   onSelect: (e) async {
@@ -177,7 +179,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Value + unit
-                _SectionLabel('Resultado'),
+                _SectionLabel(context.l10n.addPrResultSection),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -199,10 +201,10 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                           ),
                         ),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Obrigatório';
+                          if (v == null || v.isEmpty) return context.l10n.addPrValueRequired;
                           final n =
                               double.tryParse(v.replaceAll(',', '.'));
-                          if (n == null || n <= 0) return 'Valor inválido';
+                          if (n == null || n <= 0) return context.l10n.addPrValueInvalid;
                           return null;
                         },
                       ),
@@ -230,12 +232,12 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Reps (optional)
-                _SectionLabel('Repetições (opcional)'),
+                _SectionLabel(context.l10n.addPrRepsSection),
                 TextFormField(
                   controller: _repsCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    hintText: 'Ex: 5',
+                    hintText: context.l10n.addPrRepsHint,
                     filled: true,
                     fillColor: isDark
                         ? AppColors.surfaceVariantDark
@@ -247,7 +249,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return null;
-                    if (int.tryParse(v) == null) return 'Número inteiro';
+                    if (int.tryParse(v) == null) return context.l10n.addPrRepsInvalid;
                     return null;
                   },
                 ),
@@ -255,7 +257,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Date
-                _SectionLabel('Data'),
+                _SectionLabel(context.l10n.addPrDateSection),
                 InkWell(
                   onTap: _pickDate,
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -287,13 +289,13 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Notes
-                _SectionLabel('Observações (opcional)'),
+                _SectionLabel(context.l10n.addPrNotesSection),
                 TextFormField(
                   controller: _notesCtrl,
                   maxLines: 3,
                   maxLength: 200,
                   decoration: InputDecoration(
-                    hintText: 'Como foi o treino, equipamento utilizado...',
+                    hintText: context.l10n.addPrNotesHint,
                     filled: true,
                     fillColor: isDark
                         ? AppColors.surfaceVariantDark
@@ -323,9 +325,8 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                   child: SwitchListTile(
                     value: _shareToFeed,
                     onChanged: (v) => setState(() => _shareToFeed = v),
-                    title: const Text('Compartilhar no feed'),
-                    subtitle: const Text(
-                        'Seus seguidores verão este PR no feed'),
+                    title: Text(context.l10n.addPrShareToggle),
+                    subtitle: Text(context.l10n.addPrShareSubtitle),
                     secondary: const Icon(Icons.share_outlined),
                     activeColor: AppColors.primary,
                   ),
@@ -334,7 +335,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                 const SizedBox(height: AppSpacing.xxxl),
 
                 AppButton(
-                  label: widget.editPR != null ? 'Salvar alterações' : 'Registrar PR',
+                  label: widget.editPR != null ? context.l10n.editPrSubmit : context.l10n.addPrSubmit,
                   onPressed: _isLoading ? null : _submit,
                   isLoading: _isLoading,
                 ),
@@ -379,17 +380,17 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Deletar PR?'),
-        content: const Text('Esta ação não pode ser desfeita.'),
+        title: Text(context.l10n.deletePrTitle),
+        content: Text(context.l10n.deletePrConfirm),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l10n.cancelButton)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style:
                 TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Deletar'),
+            child: Text(context.l10n.deletePrButton),
           ),
         ],
       ),
@@ -443,7 +444,7 @@ class _PreviousBestBanner extends StatelessWidget {
               size: 16, color: AppColors.info),
           const SizedBox(width: AppSpacing.xs),
           Text(
-            'Melhor PR atual: ${pr.displayValue}',
+            context.l10n.addPrPreviousBest(pr.displayValue),
             style: AppTypography.labelSmall.copyWith(color: AppColors.info),
           ),
         ],
@@ -523,7 +524,7 @@ class _ExercisePickerState extends ConsumerState<_ExercisePicker> {
                   size: 20, color: AppColors.textDisabledLight),
               const SizedBox(width: AppSpacing.sm),
               Text(
-                'Selecionar exercício',
+                context.l10n.addPrSelectExercise,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.textSecondaryLight,
                 ),
@@ -601,13 +602,13 @@ class _ExerciseSearchSheetState extends ConsumerState<_ExerciseSearchSheet> {
                   AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
               child: Row(
                 children: [
-                  Text('Selecionar exercício',
+                  Text(context.l10n.addPrSelectExercise,
                       style: AppTypography.titleMedium),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: _createCustom,
                     icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('Criar novo'),
+                    label: Text(context.l10n.exerciseCreateNew),
                   ),
                 ],
               ),
@@ -620,7 +621,7 @@ class _ExerciseSearchSheetState extends ConsumerState<_ExerciseSearchSheet> {
                 onChanged: (v) => setState(() => _query = v),
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: 'Buscar exercício...',
+                  hintText: context.l10n.exerciseSearchHint,
                   prefixIcon: const Icon(Icons.search_rounded),
                   filled: true,
                   fillColor: isDark
@@ -637,8 +638,8 @@ class _ExerciseSearchSheetState extends ConsumerState<_ExerciseSearchSheet> {
             Expanded(
               child: exercisesAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const Center(
-                    child: Text('Erro ao carregar exercícios')),
+                error: (_, __) => Center(
+                    child: Text(context.l10n.prsErrorMessage)),
                 data: (exercises) => ListView.builder(
                   controller: scrollCtrl,
                   itemCount: exercises.length,
@@ -721,21 +722,21 @@ class _CreateExerciseDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Criar exercício'),
+      title: Text(context.l10n.exerciseCreateTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Nome do exercício',
-              hintText: 'Ex: Supino Engessado',
+            decoration: InputDecoration(
+              labelText: context.l10n.exerciseNameLabel,
+              hintText: context.l10n.exerciseNameHint,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
             value: _muscleGroup,
-            decoration: const InputDecoration(labelText: 'Grupo muscular'),
+            decoration: InputDecoration(labelText: context.l10n.exerciseMuscleLabel),
             items: _muscleGroups
                 .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                 .toList(),
@@ -744,7 +745,7 @@ class _CreateExerciseDialogState
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
             value: _unit,
-            decoration: const InputDecoration(labelText: 'Unidade'),
+            decoration: InputDecoration(labelText: context.l10n.exerciseUnitLabel),
             items: _units
                 .map((u) => DropdownMenuItem(value: u, child: Text(u)))
                 .toList(),
@@ -755,7 +756,7 @@ class _CreateExerciseDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(context.l10n.cancelButton),
         ),
         FilledButton(
           onPressed: () async {
@@ -772,7 +773,7 @@ class _CreateExerciseDialogState
               widget.onCreated(exercise);
             }
           },
-          child: const Text('Criar'),
+          child: Text(context.l10n.exerciseCreateButton),
         ),
       ],
     );
@@ -821,7 +822,7 @@ class _CelebrationDialog extends StatelessWidget {
             const Text('🏆', style: TextStyle(fontSize: 56)),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Novo Personal Record!',
+              context.l10n.addPrCelebrationTitle,
               style: AppTypography.titleLarge.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -857,7 +858,10 @@ class _CelebrationDialog extends StatelessWidget {
             if (improvement != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Text(
-                '+${improvement.toStringAsFixed(1)} ${pr.unit} acima do anterior',
+                context.l10n.addPrCelebrationImprovement(
+                  improvement.toStringAsFixed(1),
+                  pr.unit,
+                ),
                 style: AppTypography.labelMedium.copyWith(
                   color: AppColors.successLight,
                 ),
@@ -871,8 +875,8 @@ class _CelebrationDialog extends StatelessWidget {
                 foregroundColor: AppColors.primary,
                 minimumSize: const Size(double.infinity, 48),
               ),
-              child: const Text('Incrível! 🎉',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              child: Text(context.l10n.addPrCelebrationButton,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),

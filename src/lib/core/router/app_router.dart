@@ -14,7 +14,10 @@ import '../../features/feed/presentation/screens/feed_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/goals/presentation/screens/goals_screen.dart';
+import '../../features/prs/data/models/pr_model.dart';
 import '../../features/prs/presentation/screens/add_pr_screen.dart';
+import '../../features/prs/presentation/screens/pr_detail_screen.dart';
 import '../../features/prs/presentation/screens/prs_screen.dart';
 import '../../shared/providers/auth_provider.dart';
 import 'app_routes.dart';
@@ -80,7 +83,18 @@ GoRouter appRouter(Ref ref) {
       // Add / Edit PR
       GoRoute(
         path: AppRoutes.addPr,
-        builder: (_, state) => const AddPrScreen(),
+        builder: (_, state) {
+          final editPR = state.extra is PRModel ? state.extra as PRModel : null;
+          return AddPrScreen(editPR: editPR);
+        },
+      ),
+
+      // PR detail / history
+      GoRoute(
+        path: AppRoutes.prDetail,
+        builder: (_, state) => PRDetailScreen(
+          exerciseId: state.pathParameters['exerciseId'] ?? '',
+        ),
       ),
 
       StatefulShellRoute.indexedStack(
@@ -136,6 +150,12 @@ GoRouter appRouter(Ref ref) {
             ],
           ),
         ],
+      ),
+
+      // Goals
+      GoRoute(
+        path: AppRoutes.goals,
+        builder: (_, __) => const GoalsScreen(),
       ),
 
       // Notifications (modal-like, outside shell)

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/extensions/l10n_extension.dart';
+
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -163,7 +165,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
           isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'Comentários',
+          context.l10n.commentsTitle,
           style: AppTypography.titleMedium,
         ),
         bottom: PreferredSize(
@@ -180,19 +182,19 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
           Expanded(
             child: commentsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(
-                child: Text('Erro ao carregar comentários'),
+              error: (_, __) => Center(
+                child: Text(context.l10n.commentsError),
               ),
               data: (serverComments) {
                 final all = [...serverComments, ..._localComments];
                 if (all.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('💬', style: TextStyle(fontSize: 40)),
-                        SizedBox(height: AppSpacing.md),
-                        Text('Seja o primeiro a comentar!'),
+                        const Text('💬', style: TextStyle(fontSize: 40)),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(context.l10n.commentsEmpty),
                       ],
                     ),
                   );
@@ -215,7 +217,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
           // Reply banner
           if (_replyingTo != null)
             _ReplyBanner(
-              userName: _replyingTo!.userName ?? 'Usuário',
+              userName: _replyingTo!.userName ?? context.l10n.postDefaultUser,
               onCancel: () => setState(() => _replyingTo = null),
             ),
 
@@ -296,7 +298,7 @@ class _CommentTileState extends State<_CommentTile> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text(
-                        'Respondendo a @${comment.replyToUserName}',
+                        context.l10n.commentsReplyingTo(comment.replyToUserName!),
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.primary,
                           fontSize: 11,
@@ -320,7 +322,7 @@ class _CommentTileState extends State<_CommentTile> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          comment.userName ?? 'Usuário',
+                          comment.userName ?? context.l10n.postDefaultUser,
                           style: AppTypography.labelSmall.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
@@ -355,7 +357,7 @@ class _CommentTileState extends State<_CommentTile> {
                         GestureDetector(
                           onTap: widget.onReply,
                           child: Text(
-                            'Responder',
+                            context.l10n.commentsReply,
                             style: AppTypography.labelSmall.copyWith(
                               color: textSecondary,
                               fontSize: 11,
@@ -453,7 +455,7 @@ class _ReplyBanner extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'Respondendo a @$userName',
+              context.l10n.commentsReplyingTo(userName),
               style: AppTypography.labelSmall.copyWith(
                 color: AppColors.primary,
               ),
@@ -520,7 +522,7 @@ class _CommentInput extends StatelessWidget {
                 minLines: 1,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: 'Adicionar comentário...',
+                  hintText: context.l10n.commentsInputHint,
                   hintStyle: AppTypography.bodyMedium.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark

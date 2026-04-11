@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../features/goals/presentation/providers/goals_provider.dart';
 import '../../data/models/exercise_model.dart';
 import '../../data/models/pr_model.dart';
 import '../../data/repositories/pr_repository_impl.dart';
@@ -125,6 +126,13 @@ class PRsNotifier extends AsyncNotifier<PRsState> {
           shareToFeed: shareToFeed,
         );
     await refresh();
+
+    // Auto check-in metas vinculadas ao exercício
+    await ref.read(goalsProvider.notifier).autoCheckInForPR(
+          exerciseId: exerciseId,
+          prValue: value,
+        );
+
     return pr;
   }
 

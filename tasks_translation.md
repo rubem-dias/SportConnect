@@ -118,7 +118,7 @@
 
 ## E03 — Feed
 
-### TASK-I18N-004 · feed_screen.dart
+### ✅ TASK-I18N-004 · feed_screen.dart
 **Esforço:** P  
 **Strings a extrair (~5):**
 
@@ -132,7 +132,7 @@
 
 ---
 
-### TASK-I18N-005 · post_card.dart
+### ✅ TASK-I18N-005 · post_card.dart
 **Esforço:** P  
 **Strings a extrair (~4):**
 
@@ -148,7 +148,7 @@
 
 ---
 
-### TASK-I18N-006 · pr_card.dart
+### ✅ TASK-I18N-006 · pr_card.dart
 **Esforço:** P  
 **Strings a extrair (~3):**
 
@@ -161,7 +161,7 @@
 
 ---
 
-### TASK-I18N-007 · create_post_sheet.dart
+### ✅ TASK-I18N-007 · create_post_sheet.dart
 **Esforço:** M  
 **Strings a extrair (~16):**
 
@@ -185,7 +185,7 @@
 
 ---
 
-### TASK-I18N-008 · comments_screen.dart
+### ✅ TASK-I18N-008 · comments_screen.dart
 **Esforço:** P  
 **Strings a extrair (~7):**
 
@@ -202,7 +202,7 @@
 
 ## E04 — PRs
 
-### TASK-I18N-009 · prs_screen.dart
+### ✅ TASK-I18N-009 · prs_screen.dart
 **Esforço:** M  
 **Strings a extrair (~26):**
 
@@ -236,7 +236,7 @@
 
 ---
 
-### TASK-I18N-010 · add_pr_screen.dart
+### ✅ TASK-I18N-010 · add_pr_screen.dart
 **Esforço:** G (grande)  
 **Strings a extrair (~30):**
 

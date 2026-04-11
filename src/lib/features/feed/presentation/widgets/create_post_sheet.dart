@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -95,12 +96,12 @@ class _CreatePostSheetState extends ConsumerState<_CreatePostSheet> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        AppSnackbar.success(context, 'Post publicado!');
+        AppSnackbar.success(context, context.l10n.createPostSuccess);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isPosting = false);
-        AppSnackbar.error(context, 'Erro ao publicar. Tente novamente.');
+        AppSnackbar.error(context, context.l10n.createPostError);
       }
     }
   }
@@ -154,7 +155,7 @@ class _CreatePostSheetState extends ConsumerState<_CreatePostSheet> {
                   AppSpacing.lg, 0, AppSpacing.sm, 0),
               child: Row(
                 children: [
-                  Text('Criar post', style: AppTypography.titleMedium),
+                  Text(context.l10n.createPostTitle, style: AppTypography.titleMedium),
                   const Spacer(),
                   _PrivacyButton(
                     value: _privacy,
@@ -168,7 +169,7 @@ class _CreatePostSheetState extends ConsumerState<_CreatePostSheet> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Publicar'),
+                        : Text(context.l10n.createPostPublish),
                   ),
                 ],
               ),
@@ -195,7 +196,7 @@ class _CreatePostSheetState extends ConsumerState<_CreatePostSheet> {
                 onChanged: (_) => setState(() {}),
                 style: AppTypography.bodyMedium,
                 decoration: InputDecoration(
-                  hintText: 'O que está acontecendo no seu treino?',
+                  hintText: context.l10n.createPostHint,
                   hintStyle: AppTypography.bodyMedium.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -236,27 +237,27 @@ class _CreatePostSheetState extends ConsumerState<_CreatePostSheet> {
                   children: [
                     _ActionIconBtn(
                       icon: Icons.photo_library_outlined,
-                      label: 'Galeria',
+                      label: context.l10n.createPostGallery,
                       onTap: () => _pickMedia(fromCamera: false),
                     ),
                     _ActionIconBtn(
                       icon: Icons.camera_alt_outlined,
-                      label: 'Câmera',
+                      label: context.l10n.createPostCamera,
                       onTap: () => _pickMedia(fromCamera: true),
                     ),
                     _ActionIconBtn(
                       icon: Icons.emoji_events_outlined,
-                      label: 'PR',
+                      label: context.l10n.createPostPR,
                       onTap: _selectPR,
                     ),
                     _ActionIconBtn(
                       icon: Icons.tag_rounded,
-                      label: 'Hashtag',
+                      label: context.l10n.createPostHashtag,
                       onTap: () => _insertText('#'),
                     ),
                     _ActionIconBtn(
                       icon: Icons.alternate_email_rounded,
-                      label: 'Mencionar',
+                      label: context.l10n.createPostMention,
                       onTap: () => _insertText('@'),
                     ),
                   ],
@@ -302,35 +303,35 @@ class _PrivacyButton extends StatelessWidget {
     return PopupMenuButton<_Privacy>(
       initialValue: value,
       onSelected: onChanged,
-      itemBuilder: (_) => const [
+      itemBuilder: (ctx) => [
         PopupMenuItem(
           value: _Privacy.everyone,
           child: Row(children: [
-            Icon(Icons.public_rounded, size: 18),
-            SizedBox(width: 8),
-            Text('Todos'),
+            const Icon(Icons.public_rounded, size: 18),
+            const SizedBox(width: 8),
+            Text(ctx.l10n.createPostPrivacyEveryone),
           ]),
         ),
         PopupMenuItem(
           value: _Privacy.followers,
           child: Row(children: [
-            Icon(Icons.people_rounded, size: 18),
-            SizedBox(width: 8),
-            Text('Seguidores'),
+            const Icon(Icons.people_rounded, size: 18),
+            const SizedBox(width: 8),
+            Text(ctx.l10n.createPostPrivacyFollowers),
           ]),
         ),
         PopupMenuItem(
           value: _Privacy.community,
           child: Row(children: [
-            Icon(Icons.groups_rounded, size: 18),
-            SizedBox(width: 8),
-            Text('Comunidade'),
+            const Icon(Icons.groups_rounded, size: 18),
+            const SizedBox(width: 8),
+            Text(ctx.l10n.createPostPrivacyCommunity),
           ]),
         ),
       ],
       child: Chip(
         avatar: Icon(_privacyIcon(value), size: 14, color: AppColors.primary),
-        label: Text(_privacyLabel(value),
+        label: Text(_privacyLabel(context, value),
             style: AppTypography.labelSmall.copyWith(color: AppColors.primary)),
         backgroundColor: AppColors.primary.withOpacity(0.1),
         side: BorderSide.none,
@@ -346,10 +347,10 @@ class _PrivacyButton extends StatelessWidget {
         _Privacy.community => Icons.groups_rounded,
       };
 
-  String _privacyLabel(_Privacy p) => switch (p) {
-        _Privacy.everyone => 'Todos',
-        _Privacy.followers => 'Seguidores',
-        _Privacy.community => 'Comunidade',
+  String _privacyLabel(BuildContext context, _Privacy p) => switch (p) {
+        _Privacy.everyone => context.l10n.createPostPrivacyEveryone,
+        _Privacy.followers => context.l10n.createPostPrivacyFollowers,
+        _Privacy.community => context.l10n.createPostPrivacyCommunity,
       };
 }
 
@@ -523,7 +524,7 @@ class _PRPickerSheet extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Text('Selecionar PR para compartilhar',
+              child: Text(context.l10n.createPostSelectPR,
                   style: AppTypography.titleMedium),
             ),
             Expanded(
@@ -531,10 +532,10 @@ class _PRPickerSheet extends ConsumerWidget {
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (_, __) =>
-                    const Center(child: Text('Nenhum PR encontrado')),
+                    Center(child: Text(context.l10n.prsEmptyTitle)),
                 data: (data) => data.summaries.isEmpty
-                    ? const Center(
-                        child: Text('Você ainda não tem PRs registrados.'))
+                    ? Center(
+                        child: Text(context.l10n.createPostNoPRs))
                     : ListView.builder(
                         controller: ctrl,
                         itemCount: data.summaries.length,

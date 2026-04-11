@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/extensions/l10n_extension.dart';
+
 import '../../../../../core/router/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -113,7 +115,7 @@ class _PRsContent extends StatelessWidget {
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             title: Text(
-              'Personal Records',
+              context.l10n.prsTitle,
               style: AppTypography.titleLarge.copyWith(
                 color: isDark
                     ? AppColors.textPrimaryDark
@@ -132,7 +134,7 @@ class _PRsContent extends StatelessWidget {
                       controller: searchController,
                       onChanged: onSearch,
                       decoration: InputDecoration(
-                        hintText: 'Buscar exercício...',
+                        hintText: context.l10n.prsSearchHint,
                         prefixIcon: const Icon(Icons.search_rounded, size: 20),
                         suffixIcon: searchController.text.isNotEmpty
                             ? IconButton(
@@ -168,7 +170,7 @@ class _PRsContent extends StatelessWidget {
                       children: [
                         Center(
                           child: _FilterChip(
-                            label: 'Todos',
+                            label: context.l10n.prsFilterAll,
                             isSelected: data.selectedMuscleGroup == null,
                             onTap: () => onFilterGroup(null),
                           ),
@@ -176,7 +178,7 @@ class _PRsContent extends StatelessWidget {
                         ...muscleGroups.map(
                           (g) => Center(
                             child: _FilterChip(
-                              label: _capitalize(g),
+                              label: _muscleLabel(context, g),
                               isSelected: data.selectedMuscleGroup == g,
                               onTap: () => onFilterGroup(
                                   data.selectedMuscleGroup == g ? null : g),
@@ -206,7 +208,7 @@ class _PRsContent extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Todos os exercícios',
+                    context.l10n.prsAllExercises,
                     style: AppTypography.titleSmall.copyWith(
                       color: isDark
                           ? AppColors.textPrimaryDark
@@ -215,7 +217,7 @@ class _PRsContent extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${filtered.length} ${filtered.length == 1 ? 'exercício' : 'exercícios'}',
+                    context.l10n.prsExerciseCount(filtered.length),
                     style: AppTypography.labelSmall.copyWith(
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -232,11 +234,11 @@ class _PRsContent extends StatelessWidget {
             SliverFillRemaining(
               child: AppEmptyState(
                 icon: Icons.emoji_events_outlined,
-                title: 'Nenhum PR encontrado',
+                title: context.l10n.prsEmptyTitle,
                 subtitle: data.summaries.isEmpty
-                    ? 'Registre seu primeiro Personal Record!'
-                    : 'Tente outros filtros ou termos de busca.',
-                actionLabel: data.summaries.isEmpty ? 'Adicionar PR' : null,
+                    ? context.l10n.prsEmptyFirstTime
+                    : context.l10n.prsEmptyFilter,
+                actionLabel: data.summaries.isEmpty ? context.l10n.prsEmptyFirstTime : null,
                 onAction: data.summaries.isEmpty ? () {} : null,
               ),
             )
@@ -262,8 +264,22 @@ class _PRsContent extends StatelessWidget {
     );
   }
 
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  String _muscleLabel(BuildContext context, String group) {
+    final l = context.l10n;
+    return switch (group) {
+      'peito' => l.muscleChest,
+      'costas' => l.muscleBack,
+      'pernas' => l.muscleLegs,
+      'ombros' => l.muscleShoulders,
+      'bíceps' => l.muscleBiceps,
+      'tríceps' => l.muscleTriceps,
+      'core' => l.muscleCore,
+      'cardio' => l.muscleCardio,
+      'olímpico' => l.muscleOlympic,
+      'outros' => l.muscleOther,
+      _ => group,
+    };
+  }
 }
 
 class _HighlightsSection extends StatelessWidget {
@@ -285,7 +301,7 @@ class _HighlightsSection extends StatelessWidget {
               const Text('🏆', style: TextStyle(fontSize: 18)),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                'Meus Destaques',
+                context.l10n.prsHighlights,
                 style: AppTypography.titleSmall.copyWith(
                   color: AppColors.prGold,
                   fontWeight: FontWeight.w700,
@@ -456,7 +472,7 @@ class _ExercisePRCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _formatDate(summary.bestPR.date),
+                    _formatDate(context, summary.bestPR.date),
                     style: AppTypography.labelSmall.copyWith(
                         color: textSecondary),
                   ),
@@ -485,7 +501,7 @@ class _ExercisePRCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                     child: Text(
-                      'Novo PR! 🔥',
+                      context.l10n.prsNewBadge,
                       style: AppTypography.labelSmall.copyWith(
                         color: AppColors.prGreen,
                         fontWeight: FontWeight.w600,
@@ -522,11 +538,11 @@ class _ExercisePRCard extends StatelessWidget {
     };
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(BuildContext context, DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) return 'Hoje';
-    if (diff.inDays == 1) return 'Ontem';
-    if (diff.inDays < 7) return 'Há ${diff.inDays} dias';
+    if (diff.inDays == 0) return context.l10n.prsTimeToday;
+    if (diff.inDays == 1) return context.l10n.prsTimeYesterday;
+    if (diff.inDays < 7) return context.l10n.prsTimeDaysAgo(diff.inDays);
     return '${date.day}/${date.month}/${date.year}';
   }
 }
@@ -562,12 +578,12 @@ class _PRsError extends StatelessWidget {
           const Icon(Icons.wifi_off_rounded,
               size: 48, color: AppColors.textDisabledLight),
           const SizedBox(height: AppSpacing.lg),
-          const Text('Erro ao carregar PRs', textAlign: TextAlign.center),
+          Text(context.l10n.prsErrorMessage, textAlign: TextAlign.center),
           const SizedBox(height: AppSpacing.lg),
           TextButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Tentar novamente'),
+            label: Text(context.l10n.prsRetry),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -24,12 +25,13 @@ class _PostCardState extends State<PostCard> {
   static const _maxLines = 4;
   bool _expanded = false;
 
-  String _relativeTime(DateTime dt) {
+  String _relativeTime(BuildContext context, DateTime dt) {
+    final l10n = context.l10n;
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'agora';
-    if (diff.inMinutes < 60) return 'há ${diff.inMinutes}min';
-    if (diff.inHours < 24) return 'há ${diff.inHours}h';
-    if (diff.inDays < 7) return 'há ${diff.inDays}d';
+    if (diff.inSeconds < 60) return l10n.postTimeNow;
+    if (diff.inMinutes < 60) return l10n.postTimeMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.postTimeHours(diff.inHours);
+    if (diff.inDays < 7) return l10n.postTimeDays(diff.inDays);
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
@@ -49,7 +51,7 @@ class _PostCardState extends State<PostCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Header(post: post, relativeTime: _relativeTime(post.createdAt), textSecondary: textSecondary),
+          _Header(post: post, relativeTime: _relativeTime(context, post.createdAt), textSecondary: textSecondary),
           if (post.content.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
             _ContentText(
@@ -103,7 +105,7 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                post.userName ?? 'Usuário',
+                post.userName ?? context.l10n.postDefaultUser,
                 style: AppTypography.titleSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -174,7 +176,7 @@ class _ContentText extends StatelessWidget {
               GestureDetector(
                 onTap: onToggle,
                 child: Text(
-                  expanded ? 'ver menos' : 'ver mais',
+                  expanded ? context.l10n.postSeeLess : context.l10n.postSeeMore,
                   style: AppTypography.labelMedium.copyWith(
                     color: AppColors.primary,
                   ),

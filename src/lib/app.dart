@@ -22,6 +22,17 @@ class SportConnectApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       routerConfig: router,
       debugShowCheckedModeBanner: flavor == AppFlavor.dev,
+      // Cap text scale at 1.3× so large-font users don't break layouts.
+      // Text remains larger than default (accessibility) while layouts stay intact.
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        final clampedScale =
+            mediaQuery.textScaler.clamp(maxScaleFactor: 1.3);
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: clampedScale),
+          child: child!,
+        );
+      },
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

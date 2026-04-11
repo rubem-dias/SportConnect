@@ -352,22 +352,94 @@ class _ImageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.zero,
-      child: CachedNetworkImage(
-        imageUrl: url,
-        height: height,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => Container(
-          height: height,
-          color: AppColors.surfaceVariantLight,
+    return GestureDetector(
+      onTap: () => _openFullscreen(context),
+      child: Hero(
+        tag: 'post_image_$url',
+        child: ClipRRect(
+          borderRadius: borderRadius ?? BorderRadius.zero,
+          child: CachedNetworkImage(
+            imageUrl: url,
+            height: height,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(
+              height: height,
+              color: AppColors.surfaceVariantLight,
+            ),
+            errorWidget: (_, __, ___) => Container(
+              height: height,
+              color: AppColors.surfaceVariantLight,
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.broken_image_outlined,
+                color: AppColors.textDisabledLight,
+              ),
+            ),
+          ),
         ),
-        errorWidget: (_, __, ___) => Container(
-          height: height,
-          color: AppColors.surfaceVariantLight,
-          alignment: Alignment.center,
-          child: const Icon(Icons.broken_image_outlined, color: AppColors.textDisabledLight),
+      ),
+    );
+  }
+
+  void _openFullscreen(BuildContext context) {
+    Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (_, __, ___) => _FullscreenImageViewer(url: url),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+      ),
+    );
+  }
+}
+
+class _FullscreenImageViewer extends StatelessWidget {
+  const _FullscreenImageViewer({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: Hero(
+                  tag: 'post_image_$url',
+                  child: InteractiveViewer(
+                    child: CachedNetworkImage(
+                      imageUrl: url,
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white54,
+                        size: 64,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: AppSpacing.sm,
+                right: AppSpacing.sm,
+                child: IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -394,7 +466,7 @@ class _ActionBar extends StatefulWidget {
 }
 
 class _ActionBarState extends State<_ActionBar> {
-  static const _reactionEmojis = ['ðŸ”¥', 'ðŸ’ª', 'ðŸ†'];
+  static const _reactionEmojis = ['🔥', '💪', '🏆'];
 
   String? _myReaction;
 
@@ -442,12 +514,16 @@ class _ActionBarState extends State<_ActionBar> {
           label: widget.post.commentsCount > 0
               ? '${widget.post.commentsCount}'
               : '',
+          semanticLabel: widget.post.commentsCount > 0
+              ? '${widget.post.commentsCount} comentários'
+              : 'Comentar',
           color: widget.textSecondary,
           onTap: widget.onComment,
         ),
         const SizedBox(width: AppSpacing.sm),
         _ActionButton(
           icon: Icons.share_outlined,
+          semanticLabel: 'Compartilhar',
           color: widget.textSecondary,
           onTap: widget.onShare,
         ),
@@ -505,41 +581,46 @@ class _ReactionChipState extends State<_ReactionChip>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _animate,
-      onLongPress: widget.onLongPress,
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          margin: const EdgeInsets.only(right: AppSpacing.xs),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: widget.isActive
-                ? AppColors.primary.withValues(alpha: 0.12)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(
+    final countLabel = widget.count > 0 ? ', ${widget.count}' : '';
+    return Semantics(
+      label: '${widget.emoji}$countLabel${widget.isActive ? ", ativo" : ""}',
+      button: true,
+      child: GestureDetector(
+        onTap: _animate,
+        onLongPress: widget.onLongPress,
+        child: ScaleTransition(
+          scale: _scale,
+          child: Container(
+            margin: const EdgeInsets.only(right: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
               color: widget.isActive
-                  ? AppColors.primary.withValues(alpha: 0.4)
+                  ? AppColors.primary.withValues(alpha: 0.12)
                   : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(
+                color: widget.isActive
+                    ? AppColors.primary.withValues(alpha: 0.4)
+                    : Colors.transparent,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(widget.emoji, style: const TextStyle(fontSize: 16)),
-              if (widget.count > 0) ...[
-                const SizedBox(width: 3),
-                Text(
-                  '${widget.count}',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: widget.isActive ? AppColors.primary : null,
-                    fontWeight:
-                        widget.isActive ? FontWeight.w600 : FontWeight.w400,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(widget.emoji, style: const TextStyle(fontSize: 16)),
+                if (widget.count > 0) ...[
+                  const SizedBox(width: 3),
+                  Text(
+                    '${widget.count}',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: widget.isActive ? AppColors.primary : null,
+                      fontWeight:
+                          widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -552,30 +633,39 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.color,
     this.label,
+    this.semanticLabel,
     this.onTap,
   });
 
   final IconData icon;
   final String? label;
+  final String? semanticLabel;
   final Color color;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 20, color: color),
-          if (label != null && label!.isNotEmpty) ...[
-            const SizedBox(width: 3),
-            Text(
-              label!,
-              style: AppTypography.labelSmall.copyWith(color: color),
-            ),
-          ],
-        ],
+    return Semantics(
+      label: semanticLabel ?? label,
+      button: onTap != null,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: color),
+              if (label != null && label!.isNotEmpty) ...[
+                const SizedBox(width: 3),
+                Text(
+                  label!,
+                  style: AppTypography.labelSmall.copyWith(color: color),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -11,11 +11,44 @@ import '../providers/chat_providers.dart';
 import '../widgets/conversation_tile.dart';
 import '../widgets/create_group_sheet.dart';
 
-class ChatListScreen extends ConsumerWidget {
+class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends ConsumerState<ChatListScreen> {
+  bool _isSearching = false;
+  String _query = '';
+  final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _startSearch() {
+    setState(() => _isSearching = true);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _focusNode.requestFocus(),
+    );
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _query = '';
+    });
+    _searchController.clear();
+    _focusNode.unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final conversations = ref.watch(conversationsProvider);
 
@@ -27,31 +60,70 @@ class ChatListScreen extends ConsumerWidget {
             isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Text(
-          'Mensagens',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            onPressed: () {},
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-          IconButton(
-            icon: const Icon(Icons.group_add_rounded),
-            onPressed: () => showCreateGroupSheet(context),
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ],
+        leadingWidth: _isSearching ? 40 : null,
+        leading: _isSearching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: _stopSearch,
+              )
+            : null,
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                focusNode: _focusNode,
+                onChanged: (v) => setState(() => _query = v),
+                decoration: InputDecoration(
+                  hintText: 'Buscar conversas...',
+                  hintStyle: TextStyle(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                  border: InputBorder.none,
+                ),
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                  fontSize: 16,
+                ),
+              )
+            : Text(
+                'Mensagens',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+        actions: _isSearching
+            ? [
+                if (_query.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _query = '');
+                    },
+                  ),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.search_rounded),
+                  onPressed: _startSearch,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.group_add_rounded),
+                  onPressed: () => showCreateGroupSheet(context),
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
@@ -81,18 +153,48 @@ class ChatListScreen extends ConsumerWidget {
           ),
         ),
         data: (list) {
-          final visible =
-              list.where((c) => !c.isArchived).toList();
+          var visible = list.where((c) => !c.isArchived).toList();
+
+          if (_query.isNotEmpty) {
+            final q = _query.toLowerCase();
+            visible = visible
+                .where((c) => c.name.toLowerCase().contains(q))
+                .toList();
+          }
 
           if (visible.isEmpty) {
-            return AppEmptyState(
-              icon: Icons.chat_bubble_outline_rounded,
-              title: 'Nenhuma conversa ainda',
-              subtitle:
-                  'Encontre pessoas próximas e comece a conversar!',
-              actionLabel: 'Explorar nearby',
-              onAction: () => context.go(AppRoutes.nearby),
-            );
+            return _query.isNotEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 56,
+                          color: isDark
+                              ? AppColors.textDisabledDark
+                              : AppColors.textDisabledLight,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'Nenhuma conversa encontrada',
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : AppEmptyState(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    title: 'Nenhuma conversa ainda',
+                    subtitle:
+                        'Encontre pessoas próximas e comece a conversar!',
+                    actionLabel: 'Explorar nearby',
+                    onAction: () => context.go(AppRoutes.nearby),
+                  );
           }
 
           return RefreshIndicator(
@@ -113,10 +215,7 @@ class ChatListScreen extends ConsumerWidget {
                   key: ValueKey(conv.id),
                   direction: DismissDirection.endToStart,
                   background: _ArchiveBackground(),
-                  confirmDismiss: (_) async {
-                    // TODO(rubem): arquivar via repository.
-                    return false;
-                  },
+                  confirmDismiss: (_) async => false,
                   child: ConversationTile(
                     conversation: conv,
                     onTap: () {

@@ -15,6 +15,7 @@ import '../../features/feed/presentation/screens/comments_screen.dart';
 import '../../features/feed/presentation/screens/feed_screen.dart';
 import '../../features/goals/presentation/screens/goals_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
+import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/prs/data/models/pr_model.dart';
@@ -24,6 +25,8 @@ import '../../features/prs/presentation/screens/prs_screen.dart';
 import '../../features/search/presentation/screens/explore_screen.dart';
 import '../../features/search/presentation/screens/search_screen.dart';
 import '../../shared/providers/auth_provider.dart';
+import '../theme/app_colors.dart';
+import 'app_page_transitions.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -73,31 +76,39 @@ GoRouter appRouter(Ref ref) {
       // Comments screen (takes post via extra)
       GoRoute(
         path: '/feed/post/:postId/comments',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final post = state.extra as PostModel?;
-          if (post == null) {
-            return const Scaffold(
-              body: Center(child: Text('Post não encontrado')),
-            );
-          }
-          return CommentsScreen(post: post);
+          return slideTransitionPage(
+            pageKey: state.pageKey,
+            child: post == null
+                ? const Scaffold(
+                    body: Center(child: Text('Post não encontrado')),
+                  )
+                : CommentsScreen(post: post),
+          );
         },
       ),
 
       // Add / Edit PR
       GoRoute(
         path: AppRoutes.addPr,
-        builder: (_, state) {
+        pageBuilder: (_, state) {
           final editPR = state.extra is PRModel ? state.extra as PRModel : null;
-          return AddPrScreen(editPR: editPR);
+          return modalTransitionPage(
+            pageKey: state.pageKey,
+            child: AddPrScreen(editPR: editPR),
+          );
         },
       ),
 
       // PR detail / history
       GoRoute(
         path: AppRoutes.prDetail,
-        builder: (_, state) => PRDetailScreen(
-          exerciseId: state.pathParameters['exerciseId'] ?? '',
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: PRDetailScreen(
+            exerciseId: state.pathParameters['exerciseId'] ?? '',
+          ),
         ),
       ),
 
@@ -137,14 +148,17 @@ GoRouter appRouter(Ref ref) {
                 routes: [
                   GoRoute(
                     path: ':conversationId',
-                    builder: (_, state) {
+                    pageBuilder: (_, state) {
                       final conv = state.extra is ConversationModel
                           ? state.extra as ConversationModel
                           : null;
-                      return ChatScreen(
-                        conversationId:
-                            state.pathParameters['conversationId'] ?? '',
-                        conversation: conv,
+                      return slideTransitionPage(
+                        pageKey: state.pageKey,
+                        child: ChatScreen(
+                          conversationId:
+                              state.pathParameters['conversationId'] ?? '',
+                          conversation: conv,
+                        ),
                       );
                     },
                   ),
@@ -174,25 +188,44 @@ GoRouter appRouter(Ref ref) {
       // Goals
       GoRoute(
         path: AppRoutes.goals,
-        builder: (_, __) => const GoalsScreen(),
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: const GoalsScreen(),
+        ),
       ),
 
       // Notifications (modal-like, outside shell)
       GoRoute(
         path: AppRoutes.notifications,
-        builder: (_, __) => const NotificationsScreen(),
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: const NotificationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationSettings,
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: const NotificationSettingsScreen(),
+        ),
       ),
 
       // Search
       GoRoute(
         path: AppRoutes.search,
-        builder: (_, __) => const SearchScreen(),
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: const SearchScreen(),
+        ),
       ),
 
       // Explore / Trending
       GoRoute(
         path: AppRoutes.explore,
-        builder: (_, __) => const ExploreScreen(),
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: const ExploreScreen(),
+        ),
       ),
     ],
     errorBuilder: (_, state) => _NotFoundScreen(error: state.error),
@@ -204,40 +237,215 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
+  static const _destinations = [
+    _NavDestination(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+      label: 'Feed',
+    ),
+    _NavDestination(
+      icon: Icons.emoji_events_outlined,
+      activeIcon: Icons.emoji_events,
+      label: 'PRs',
+    ),
+    _NavDestination(
+      icon: Icons.location_on_outlined,
+      activeIcon: Icons.location_on,
+      label: 'Nearby',
+    ),
+    _NavDestination(
+      icon: Icons.chat_bubble_outline,
+      activeIcon: Icons.chat_bubble,
+      label: 'Chat',
+    ),
+    _NavDestination(
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+      label: 'Perfil',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: navigationShell.goBranch,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Feed',
+      bottomNavigationBar: _FluidBottomNav(
+        currentIndex: navigationShell.currentIndex,
+        onTap: navigationShell.goBranch,
+        destinations: _destinations,
+      ),
+    );
+  }
+}
+
+class _NavDestination {
+  const _NavDestination({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+}
+
+class _FluidBottomNav extends StatefulWidget {
+  const _FluidBottomNav({
+    required this.currentIndex,
+    required this.onTap,
+    required this.destinations,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final List<_NavDestination> destinations;
+
+  @override
+  State<_FluidBottomNav> createState() => _FluidBottomNavState();
+}
+
+class _FluidBottomNavState extends State<_FluidBottomNav>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _indicatorCtrl;
+  late Animation<double> _indicatorPos;
+  int _prevIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _prevIndex = widget.currentIndex;
+    _indicatorCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+      value: 1.0,
+    );
+    _indicatorPos = Tween<double>(
+      begin: widget.currentIndex.toDouble(),
+      end: widget.currentIndex.toDouble(),
+    ).animate(_indicatorCtrl);
+  }
+
+  @override
+  void didUpdateWidget(_FluidBottomNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _indicatorPos = Tween<double>(
+        begin: _prevIndex.toDouble(),
+        end: widget.currentIndex.toDouble(),
+      ).animate(
+        CurvedAnimation(
+          parent: _indicatorCtrl,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      _prevIndex = widget.currentIndex;
+      _indicatorCtrl
+        ..reset()
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _indicatorCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final count = widget.destinations.length;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.emoji_events_outlined),
-            selectedIcon: Icon(Icons.emoji_events),
-            label: 'PRs',
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: AnimatedBuilder(
+            animation: _indicatorCtrl,
+            builder: (context, _) {
+              return Stack(
+                children: [
+                  // Sliding indicator pill
+                  Positioned(
+                    top: 4,
+                    left: (_indicatorPos.value / (count - 1)) *
+                            (MediaQuery.sizeOf(context).width -
+                                (MediaQuery.sizeOf(context).width / count)) +
+                        (MediaQuery.sizeOf(context).width / count - 48) / 2,
+                    child: Container(
+                      width: 48,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  // Tab items
+                  Row(
+                    children: List.generate(count, (i) {
+                      final dest = widget.destinations[i];
+                      final isActive = widget.currentIndex == i;
+                      return Expanded(
+                        child: Semantics(
+                          label: '${dest.label}${isActive ? ", selecionado" : ""}',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () => widget.onTap(i),
+                            behavior: HitTestBehavior.opaque,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 8),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: Icon(
+                                  isActive ? dest.activeIcon : dest.icon,
+                                  key: ValueKey(isActive),
+                                  color: isActive
+                                      ? AppColors.primary
+                                      : (isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight),
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                dest.label,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: isActive
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isActive
+                                      ? AppColors.primary
+                                      : (isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
           ),
-          NavigationDestination(
-            icon: Icon(Icons.location_on_outlined),
-            selectedIcon: Icon(Icons.location_on),
-            label: 'Nearby',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: 'Chat',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
+        ),
       ),
     );
   }

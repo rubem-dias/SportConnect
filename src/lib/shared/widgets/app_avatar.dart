@@ -42,22 +42,27 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget avatar = GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _diameter,
-        height: _diameter,
-        decoration: const BoxDecoration(shape: BoxShape.circle),
-        clipBehavior: Clip.antiAlias,
-        child: imageUrl != null
-            ? CachedNetworkImage(
-                imageUrl: imageUrl!,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => _Placeholder(initials: _initials, diameter: _diameter),
-                errorWidget: (_, __, ___) =>
-                    _Placeholder(initials: _initials, diameter: _diameter),
-              )
-            : _Placeholder(initials: _initials, diameter: _diameter),
+    final Widget avatar = Semantics(
+      label: name != null ? 'Avatar de $name' : 'Avatar',
+      button: onTap != null,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: _diameter,
+          height: _diameter,
+          decoration: const BoxDecoration(shape: BoxShape.circle),
+          clipBehavior: Clip.antiAlias,
+          child: imageUrl != null
+              ? CachedNetworkImage(
+                  imageUrl: imageUrl!,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) =>
+                      _Placeholder(initials: _initials, diameter: _diameter),
+                  errorWidget: (_, __, ___) =>
+                      _Placeholder(initials: _initials, diameter: _diameter),
+                )
+              : _Placeholder(initials: _initials, diameter: _diameter),
+        ),
       ),
     );
 

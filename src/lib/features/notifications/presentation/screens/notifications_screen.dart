@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -46,6 +47,14 @@ class NotificationsScreen extends ConsumerWidget {
                 style: TextStyle(color: AppColors.primary),
               ),
             ),
+          IconButton(
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: () => context.push(AppRoutes.notificationSettings),
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+            tooltip: 'Configurações',
+          ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

@@ -64,6 +64,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  void _scrollToFirstMessage() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -101,6 +110,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   builder: (_) => GroupInfoScreen(conversation: conv),
                 ),
               );
+            } else {
+              _scrollToFirstMessage();
             }
           },
           child: _ChatAppBarTitle(

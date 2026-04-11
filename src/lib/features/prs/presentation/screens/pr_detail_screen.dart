@@ -47,6 +47,7 @@ class PRDetailScreen extends ConsumerStatefulWidget {
 
 class _PRDetailScreenState extends ConsumerState<PRDetailScreen> {
   _Period _period = _Period.all;
+  bool _showCommunityAvg = true;
 
   List<PRModel> _filterByPeriod(List<PRModel> history) {
     final dur = _period.duration;
@@ -78,6 +79,11 @@ class _PRDetailScreenState extends ConsumerState<PRDetailScreen> {
           final exerciseName =
               history.isNotEmpty ? history.first.exerciseName : '';
           final unit = history.isNotEmpty ? history.first.unit : '';
+          // Mock community average: 75% of the user's best PR
+          final best = sorted.isNotEmpty
+              ? sorted.map((p) => p.value).reduce((a, b) => a > b ? a : b)
+              : 0.0;
+          final communityAvg = best * 0.75;
 
           return CustomScrollView(
             slivers: [
@@ -91,12 +97,52 @@ class _PRDetailScreenState extends ConsumerState<PRDetailScreen> {
                 ),
               ),
 
+              // Community avg toggle
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.xs,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'Média da comunidade',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                      const Spacer(),
+                      Switch(
+                        value: _showCommunityAvg,
+                        onChanged: (v) =>
+                            setState(() => _showCommunityAvg = v),
+                        activeThumbColor: AppColors.secondary,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
               // Chart
               SliverToBoxAdapter(
                 child: _PRChart(
                   history: filtered.isNotEmpty ? filtered : sorted,
                   unit: unit,
                   isDark: isDark,
+                  communityAvg: _showCommunityAvg ? communityAvg : null,
                 ),
               ),
 
@@ -240,11 +286,13 @@ class _PRChart extends StatefulWidget {
     required this.history,
     required this.unit,
     required this.isDark,
+    this.communityAvg,
   });
 
   final List<PRModel> history;
   final String unit;
   final bool isDark;
+  final double? communityAvg;
 
   @override
   State<_PRChart> createState() => _PRChartState();
@@ -265,7 +313,10 @@ class _PRChartState extends State<_PRChart> {
 
     final minY = widget.history.map((p) => p.value).reduce((a, b) => a < b ? a : b);
     final maxY = widget.history.map((p) => p.value).reduce((a, b) => a > b ? a : b);
-    final padding = (maxY - minY) * 0.15;
+    final effectiveMin = widget.communityAvg != null
+        ? [minY, widget.communityAvg!].reduce((a, b) => a < b ? a : b)
+        : minY;
+    final padding = (maxY - effectiveMin) * 0.15;
 
     final textColor = widget.isDark
         ? AppColors.textSecondaryDark
@@ -278,7 +329,7 @@ class _PRChartState extends State<_PRChart> {
         height: 200,
         child: LineChart(
           LineChartData(
-            minY: minY - padding,
+            minY: effectiveMin - padding,
             maxY: maxY + padding,
             clipData: const FlClipData.all(),
             gridData: FlGridData(
@@ -365,6 +416,18 @@ class _PRChartState extends State<_PRChart> {
               ),
             ),
             lineBarsData: [
+              // Community average (horizontal dashed line in orange)
+              if (widget.communityAvg != null)
+                LineChartBarData(
+                  spots: [
+                    FlSpot(spots.first.x, widget.communityAvg!),
+                    FlSpot(spots.last.x, widget.communityAvg!),
+                  ],
+                  color: AppColors.secondary.withValues(alpha: 0.7),
+                  barWidth: 1.5,
+                  dotData: const FlDotData(show: false),
+                  dashArray: [8, 5],
+                ),
               // Trend line (smoothed)
               if (widget.history.length >= 3)
                 LineChartBarData(

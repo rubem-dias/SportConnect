@@ -35,6 +35,7 @@ abstract final class AppRoutes {
   static const userProfile = '/profile/:userId';
   static const editProfile = '/profile/edit';
   static const notifications = '/notifications';
+  static const notificationSettings = '/notifications/settings';
   static const search = '/search';
   static const explore = '/explore';
   static const goals = '/goals';

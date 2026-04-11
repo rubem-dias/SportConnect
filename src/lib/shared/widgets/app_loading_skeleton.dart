@@ -38,9 +38,9 @@ class _AppLoadingSkeletonState extends State<AppLoadingSkeleton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+    _animation = Tween<double>(begin: -1.5, end: 2.5).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -57,19 +57,26 @@ class _AppLoadingSkeletonState extends State<AppLoadingSkeleton>
     final baseColor = isDark
         ? AppColors.surfaceVariantDark
         : AppColors.surfaceVariantLight;
+    final highlightColor = isDark
+        ? AppColors.surfaceDark
+        : Colors.white;
+
+    final borderRadius = widget.isCircle
+        ? BorderRadius.circular(9999)
+        : BorderRadius.circular(widget.borderRadius ?? AppRadius.xs);
 
     return AnimatedBuilder(
       animation: _animation,
-      builder: (_, __) => Opacity(
-        opacity: _animation.value,
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: baseColor,
-            borderRadius: widget.isCircle
-                ? BorderRadius.circular(9999)
-                : BorderRadius.circular(widget.borderRadius ?? AppRadius.xs),
+      builder: (_, __) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          gradient: LinearGradient(
+            begin: Alignment(_animation.value - 1, 0),
+            end: Alignment(_animation.value, 0),
+            colors: [baseColor, highlightColor, baseColor],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
       ),

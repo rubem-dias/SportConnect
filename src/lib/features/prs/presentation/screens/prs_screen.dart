@@ -166,17 +166,21 @@ class _PRsContent extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.lg),
                       children: [
-                        _FilterChip(
-                          label: 'Todos',
-                          isSelected: data.selectedMuscleGroup == null,
-                          onTap: () => onFilterGroup(null),
+                        Center(
+                          child: _FilterChip(
+                            label: 'Todos',
+                            isSelected: data.selectedMuscleGroup == null,
+                            onTap: () => onFilterGroup(null),
+                          ),
                         ),
                         ...muscleGroups.map(
-                          (g) => _FilterChip(
-                            label: _capitalize(g),
-                            isSelected: data.selectedMuscleGroup == g,
-                            onTap: () => onFilterGroup(
-                                data.selectedMuscleGroup == g ? null : g),
+                          (g) => Center(
+                            child: _FilterChip(
+                              label: _capitalize(g),
+                              isSelected: data.selectedMuscleGroup == g,
+                              onTap: () => onFilterGroup(
+                                  data.selectedMuscleGroup == g ? null : g),
+                            ),
                           ),
                         ),
                       ],

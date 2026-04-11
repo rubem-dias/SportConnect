@@ -8,10 +8,13 @@ import '../../features/auth/presentation/screens/onboarding_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
+import '../../features/feed/data/models/post_model.dart';
+import '../../features/feed/presentation/screens/comments_screen.dart';
 import '../../features/feed/presentation/screens/feed_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/prs/presentation/screens/add_pr_screen.dart';
 import '../../features/prs/presentation/screens/prs_screen.dart';
 import '../../shared/providers/auth_provider.dart';
 import 'app_routes.dart';
@@ -60,6 +63,26 @@ GoRouter appRouter(Ref ref) {
       ),
 
       // Shell — Bottom Navigation
+      // Comments screen (takes post via extra)
+      GoRoute(
+        path: '/feed/post/:postId/comments',
+        builder: (context, state) {
+          final post = state.extra as PostModel?;
+          if (post == null) {
+            return const Scaffold(
+              body: Center(child: Text('Post não encontrado')),
+            );
+          }
+          return CommentsScreen(post: post);
+        },
+      ),
+
+      // Add / Edit PR
+      GoRoute(
+        path: AppRoutes.addPr,
+        builder: (_, state) => const AddPrScreen(),
+      ),
+
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             _ScaffoldWithBottomNav(navigationShell: navigationShell),

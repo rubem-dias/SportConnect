@@ -15,4 +15,21 @@ abstract interface class FeedRepository {
     String? cursor,
     int limit = 20,
   });
+
+  Future<PostModel> createPost({
+    required String content,
+    List<String> mediaUrls = const [],
+    String? prId,
+    String privacy = 'everyone',
+  });
+
+  Future<void> reactToPost({
+    required String postId,
+    required String emoji,
+  });
+
+  Future<void> removeReaction({
+    required String postId,
+    required String emoji,
+  });
 }

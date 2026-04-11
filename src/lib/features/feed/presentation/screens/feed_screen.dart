@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_loading_skeleton.dart';
 import '../providers/feed_provider.dart';
+import '../widgets/create_post_sheet.dart';
 import '../widgets/post_card.dart';
 import '../widgets/pr_card.dart';
 
@@ -49,6 +52,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showCreatePostSheet(context),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add_rounded),
+      ),
       body: feed.when(
         loading: () => const _FeedSkeleton(),
         error: (e, _) => _FeedError(
@@ -103,7 +112,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       if (isPR) {
                         return PRCard(
                           post: post,
-                          onComment: () {},
+                          onComment: () => context.push(
+                            AppRoutes.postCommentsPath(post.id),
+                            extra: post,
+                          ),
                           onShare: () {},
                         );
                       }
@@ -112,7 +124,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         children: [
                           PostCard(
                             post: post,
-                            onComment: () {},
+                            onComment: () => context.push(
+                              AppRoutes.postCommentsPath(post.id),
+                              extra: post,
+                            ),
                             onShare: () {},
                           ),
                           _PostDivider(isDark: isDark),
@@ -177,7 +192,7 @@ class _FeedAppBar extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.add_box_outlined),
-          onPressed: () {},
+          onPressed: () => showCreatePostSheet(context),
         ),
       ],
       bottom: PreferredSize(

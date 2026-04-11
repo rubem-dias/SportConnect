@@ -15,8 +15,12 @@ abstract final class AppRoutes {
 
   // Feed nested
   static const postDetail = '/feed/post/:postId';
+  static const postComments = '/feed/post/:postId/comments';
   static const createPost = '/feed/create';
   static const storyView = '/feed/story/:userId';
+
+  static String postCommentsPath(String postId) =>
+      '/feed/post/$postId/comments';
 
   // PR nested
   static const prDetail = '/prs/exercise/:exerciseId';

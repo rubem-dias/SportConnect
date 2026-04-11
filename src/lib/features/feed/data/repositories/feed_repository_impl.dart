@@ -39,6 +39,47 @@ class FeedRepositoryImpl implements FeedRepository {
     }
   }
 
+  @override
+  Future<PostModel> createPost({
+    required String content,
+    List<String> mediaUrls = const [],
+    String? prId,
+    String privacy = 'everyone',
+  }) async {
+    final response = await _client.dio.post<dynamic>(
+      ApiEndpoints.posts,
+      data: {
+        'content': content,
+        'mediaUrls': mediaUrls,
+        if (prId != null) 'prId': prId,
+        'privacy': privacy,
+      },
+    );
+    return PostModel.fromJson(Map<String, dynamic>.from(response.data as Map? ?? {}));
+  }
+
+  @override
+  Future<void> reactToPost({
+    required String postId,
+    required String emoji,
+  }) async {
+    await _client.dio.post<dynamic>(
+      ApiEndpoints.postReactions(postId),
+      data: {'emoji': emoji},
+    );
+  }
+
+  @override
+  Future<void> removeReaction({
+    required String postId,
+    required String emoji,
+  }) async {
+    await _client.dio.delete<dynamic>(
+      ApiEndpoints.postReactions(postId),
+      data: {'emoji': emoji},
+    );
+  }
+
   FeedPage _parseFeedPage(dynamic payload) {
     List<dynamic> postsJson = const <dynamic>[];
     String? nextCursor;

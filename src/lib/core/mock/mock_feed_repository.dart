@@ -6,6 +6,34 @@ class MockFeedRepository implements FeedRepository {
   static final _page2 = _buildPage2();
 
   @override
+  Future<PostModel> createPost({
+    required String content,
+    List<String> mediaUrls = const [],
+    String? prId,
+    String privacy = 'everyone',
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    return PostModel(
+      id: 'mock_${DateTime.now().millisecondsSinceEpoch}',
+      userId: 'me',
+      content: content,
+      mediaUrls: mediaUrls,
+      exerciseData: null,
+      prData: null,
+      reactions: const {},
+      commentsCount: 0,
+      createdAt: DateTime.now(),
+      userName: 'Você',
+    );
+  }
+
+  @override
+  Future<void> reactToPost({required String postId, required String emoji}) async {}
+
+  @override
+  Future<void> removeReaction({required String postId, required String emoji}) async {}
+
+  @override
   Future<FeedPage> fetchFeed({String? cursor, int limit = 20}) async {
     // Simula latência de rede
     await Future<void>.delayed(const Duration(milliseconds: 800));

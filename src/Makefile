@@ -13,7 +13,8 @@ dev-web:
 
 ## Roda no device/emulator Android — rode `flutter devices` pra ver o ID e passe: make dev-android DEVICE=emulator-5554
 dev-android:
-	flutter run -t lib/main_dev.dart -d $(DEVICE)
+# 	flutter run -t lib/main_dev.dart -d $(DEVICE)
+	flutter run -t lib/main_dev.dart -d emulator-5554
 
 ## Instala dependências
 get:

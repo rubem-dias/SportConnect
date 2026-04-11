@@ -275,14 +275,14 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-014
 
-- [ ] Bottom sheet de criação (estilo Telegram — sobe suavemente)
-- [ ] Campo de texto com hashtag highlight (#academia, #crossfit)
-- [ ] Seleção de mídia (galeria + câmera)
-- [ ] Opção "Compartilhar PR" — abre seletor de PR cadastrado
-- [ ] Seleção de privacidade: Todos / Seguidores / Comunidade específica
-- [ ] Preview antes de publicar
-- [ ] Upload com progress indicator
-- [ ] Rascunho salvo localmente se fechar sem publicar
+- [x] Bottom sheet de criação (estilo Telegram — sobe suavemente)
+- [x] Campo de texto com hashtag highlight (#academia, #crossfit)
+- [x] Seleção de mídia (galeria + câmera)
+- [x] Opção "Compartilhar PR" — abre seletor de PR cadastrado
+- [x] Seleção de privacidade: Todos / Seguidores / Comunidade específica
+- [x] Preview antes de publicar
+- [x] Upload com progress indicator
+- [x] Rascunho salvo localmente se fechar sem publicar
 
 **Aceite:** Post com foto publicado aparece no topo do feed em < 3s
 
@@ -292,14 +292,14 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-015
 
-- [ ] Tap na reaction: toggle com animação scale + haptic feedback
-- [ ] Long press: exibir todos os tipos de reaction (emoji picker compacto)
-- [ ] Tela de comentários:
-  - Lista de comentários com avatar + nome + texto + tempo
-  - Campo de texto fixo no rodapé (estilo Telegram)
-  - Mencionar usuário com @
-  - Reply em comentário específico
-- [ ] Contagem de comentários atualiza em tempo real (WebSocket)
+- [x] Tap na reaction: toggle com animação scale + haptic feedback
+- [x] Long press: exibir todos os tipos de reaction (emoji picker compacto)
+- [x] Tela de comentários:
+  - [x] Lista de comentários com avatar + nome + texto + tempo
+  - [x] Campo de texto fixo no rodapé (estilo Telegram)
+  - [x] Mencionar usuário com @
+  - [x] Reply em comentário específico
+- [ ] Contagem de comentários atualiza em tempo real (WebSocket) — pendente TASK-025
 
 **Aceite:** Reaction anima imediatamente (optimistic update); comentário aparece sem reload
 
@@ -311,10 +311,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 3  
 **Dependências:** TASK-006
 
-- [ ] `ExerciseModel` (id, name, muscleGroup, isCustom, unit: kg/km/min)
-- [ ] `PRModel` (id, exerciseId, value, unit, reps, date, notes, isShared)
-- [ ] `PRRepository`: listar por exercício, criar, histórico, melhor de cada
-- [ ] Banco local Hive para PRs offline-first
+- [x] `ExerciseModel` (id, name, muscleGroup, isCustom, unit: kg/km/min)
+- [x] `PRModel` (id, exerciseId, value, unit, reps, date, notes, isShared)
+- [x] `PRRepository`: listar por exercício, criar, histórico, melhor de cada
+- [x] Banco local Hive para PRs offline-first
 
 **Aceite:** PRs salvos offline sincronizam ao voltar online
 
@@ -324,13 +324,13 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-019, TASK-004
 
-- [ ] Lista de exercícios com melhor PR de cada um
-- [ ] Ícone de músculo por grupo (peito, costas, pernas, etc.)
-- [ ] Filtros: por grupo muscular, por data, favoritos
-- [ ] Card de exercício: nome + melhor mark + data + badge "Novo PR!" se recente
-- [ ] Busca por exercício
-- [ ] Floating Action Button para registrar novo PR
-- [ ] Seção "Meus Destaques" (top 3 PRs mais impressionantes)
+- [x] Lista de exercícios com melhor PR de cada um
+- [x] Ícone de músculo por grupo (peito, costas, pernas, etc.)
+- [x] Filtros: por grupo muscular, por data, favoritos
+- [x] Card de exercício: nome + melhor mark + data + badge "Novo PR!" se recente
+- [x] Busca por exercício
+- [x] Floating Action Button para registrar novo PR
+- [x] Seção "Meus Destaques" (top 3 PRs mais impressionantes)
 
 **Aceite:** Lista filtra corretamente; badge aparece em PR novo sem reload
 
@@ -340,13 +340,13 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-020
 
-- [ ] Selecionar exercício (busca + recentes + biblioteca completa)
-- [ ] Criar exercício customizado se não existir
-- [ ] Campos: valor + unidade, reps (opcional), data, observações
-- [ ] Validação: valor maior que zero, data não futura
-- [ ] Se valor > PR anterior: animação de celebração 🎉 + badge automático
-- [ ] Toggle "Compartilhar no feed" com preview do card
-- [ ] Editar / deletar PR existente
+- [x] Selecionar exercício (busca + recentes + biblioteca completa)
+- [x] Criar exercício customizado se não existir
+- [x] Campos: valor + unidade, reps (opcional), data, observações
+- [x] Validação: valor maior que zero, data não futura
+- [x] Se valor > PR anterior: animação de celebração 🎉 + badge automático
+- [x] Toggle "Compartilhar no feed" com preview do card
+- [x] Editar / deletar PR existente
 
 **Aceite:** Novo PR maior que anterior dispara animação e pergunta se quer postar
 

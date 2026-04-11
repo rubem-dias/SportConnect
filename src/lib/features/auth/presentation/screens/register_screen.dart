@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/router/app_routes.dart';
@@ -157,7 +158,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       );
       return parseAvailability(response.data ?? <String, dynamic>{});
     } on DioException catch (e) {
-      // Fallback for APIs that expose this check through POST.
       if (e.response?.statusCode != 405) return null;
       try {
         final response = await client.post<Map<String, dynamic>>(
@@ -172,14 +172,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   String? _passwordValidator(String? value) {
-    if (value == null || value.isEmpty) return 'Informe a senha';
-    if (value.length < 8) return 'Mínimo 8 caracteres';
-    if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Inclua ao menos 1 letra maiúscula';
-    if (!RegExp(r'[a-z]').hasMatch(value)) return 'Inclua ao menos 1 letra minúscula';
-    if (!RegExp(r'[0-9]').hasMatch(value)) return 'Inclua ao menos 1 número';
-    if (!RegExp(r'[^A-Za-z0-9]').hasMatch(value)) {
-      return 'Inclua ao menos 1 caractere especial';
-    }
+    final l10n = context.l10n;
+    if (value == null || value.isEmpty) return l10n.loginPasswordHint;
+    if (value.length < 8) return l10n.registerPasswordMin;
+    if (!RegExp(r'[A-Z]').hasMatch(value)) return l10n.registerPasswordUppercase;
+    if (!RegExp(r'[a-z]').hasMatch(value)) return l10n.registerPasswordLowercase;
+    if (!RegExp(r'[0-9]').hasMatch(value)) return l10n.registerPasswordNumber;
+    if (!RegExp(r'[^A-Za-z0-9]').hasMatch(value)) return l10n.registerPasswordSpecial;
     return null;
   }
 
@@ -187,12 +186,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_stepOneKey.currentState!.validate()) return;
 
     if (_isCheckingEmail) {
-      AppSnackbar.info(context, 'Aguarde a validação do e-mail.');
+      AppSnackbar.info(context, context.l10n.registerAwaitEmailValidation);
       return;
     }
 
     if (_isEmailAvailable == false) {
-      AppSnackbar.error(context, 'E-mail já cadastrado.');
+      AppSnackbar.error(context, context.l10n.registerEmailTaken);
       return;
     }
 
@@ -203,12 +202,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_stepTwoKey.currentState!.validate()) return;
 
     if (_isCheckingUsername) {
-      AppSnackbar.info(context, 'Aguarde a validação do username.');
+      AppSnackbar.info(context, context.l10n.registerAwaitUsernameValidation);
       return;
     }
 
     if (_isUsernameAvailable == false) {
-      AppSnackbar.error(context, 'Username indisponível.');
+      AppSnackbar.error(context, context.l10n.registerUsernameTaken);
       return;
     }
 
@@ -221,6 +220,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     ref.listen(authStateProvider, (previous, next) {
       next.whenOrNull(
         data: (user) {
@@ -235,14 +236,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final isLoading = ref.watch(authStateProvider).isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Criar conta')),
+      appBar: AppBar(title: Text(l10n.registerTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Etapa ${_currentStep + 1} de 2'),
+              Text(l10n.registerStep(_currentStep + 1, 2)),
               const SizedBox(height: AppSpacing.sm),
               LinearProgressIndicator(value: (_currentStep + 1) / 2),
               const SizedBox(height: AppSpacing.xl),
@@ -255,37 +256,37 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     children: [
                       AppTextField(
                         controller: _nameController,
-                        label: 'Nome completo',
+                        label: l10n.registerNameLabel,
                         textCapitalization: TextCapitalization.words,
                         prefixIcon: const Icon(Icons.person_outline),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'Informe seu nome';
+                            return l10n.registerNameHint;
                           }
-                          if (v.trim().length < 2) return 'Nome muito curto';
+                          if (v.trim().length < 2) return l10n.registerNameTooShort;
                           return null;
                         },
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
                         controller: _emailController,
-                        label: 'E-mail',
+                        label: l10n.registerEmailLabel,
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: const Icon(Icons.email_outlined),
                         helperText: _isCheckingEmail
-                            ? 'Validando e-mail...'
+                            ? l10n.registerEmailChecking
                             : _isEmailAvailable == true
-                                ? 'E-mail disponível'
+                                ? l10n.registerEmailAvailable
                                 : null,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'Informe o e-mail';
+                            return l10n.registerEmailHint;
                           }
                           if (!_emailRegex.hasMatch(v.trim())) {
-                            return 'E-mail inválido';
+                            return l10n.registerEmailInvalid;
                           }
                           if (_isEmailAvailable == false) {
-                            return 'E-mail já cadastrado';
+                            return l10n.registerEmailTaken;
                           }
                           return null;
                         },
@@ -293,7 +294,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
                         controller: _passwordController,
-                        label: 'Senha',
+                        label: l10n.registerPasswordLabel,
                         isPassword: true,
                         prefixIcon: const Icon(Icons.lock_outline),
                         validator: _passwordValidator,
@@ -301,22 +302,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
                         controller: _confirmPasswordController,
-                        label: 'Confirmar senha',
+                        label: l10n.registerConfirmPassword,
                         isPassword: true,
                         prefixIcon: const Icon(Icons.lock_reset_outlined),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
-                            return 'Confirme sua senha';
+                            return l10n.registerConfirmPasswordHint;
                           }
                           if (v != _passwordController.text) {
-                            return 'As senhas não conferem';
+                            return l10n.registerPasswordMismatch;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       AppButton(
-                        label: 'Continuar',
+                        label: l10n.registerNext,
                         onPressed: isLoading ? null : _goToStepTwo,
                       ),
                     ],
@@ -343,7 +344,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   'Upload de foto será habilitado na próxima task.',
                                 );
                               },
-                              child: const Text('Adicionar foto (opcional)'),
+                              child: Text(l10n.registerAddPhoto),
                             ),
                           ],
                         ),
@@ -351,22 +352,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
                         controller: _usernameController,
-                        label: 'Username',
+                        label: l10n.registerUsernameLabel,
                         prefixIcon: const Icon(Icons.alternate_email),
                         helperText: _isCheckingUsername
-                            ? 'Validando username...'
+                            ? l10n.registerUsernameChecking
                             : _isUsernameAvailable == true
-                                ? 'Username disponível'
-                                : 'Use 3 a 20 caracteres: letras, números ou _',
+                                ? l10n.registerUsernameAvailable
+                                : l10n.registerUsernameHelper,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'Informe um username';
+                            return l10n.registerUsernameHint;
                           }
                           if (!_usernameRegex.hasMatch(v.trim())) {
-                            return 'Username inválido';
+                            return l10n.registerUsernameInvalid;
                           }
                           if (_isUsernameAvailable == false) {
-                            return 'Username indisponível';
+                            return l10n.registerUsernameTaken;
                           }
                           return null;
                         },
@@ -376,7 +377,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         children: [
                           Expanded(
                             child: AppButton(
-                              label: 'Voltar',
+                              label: l10n.registerBack,
                               variant: AppButtonVariant.secondary,
                               onPressed: isLoading
                                   ? null
@@ -386,7 +387,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: AppButton(
-                              label: 'Criar conta',
+                              label: l10n.registerSubmit,
                               isLoading: isLoading,
                               onPressed: isLoading ? null : _submit,
                             ),
@@ -401,10 +402,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Já tem conta? '),
+                  Text(l10n.registerAlreadyHaveAccount),
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: const Text('Entrar'),
+                    child: Text(l10n.registerSignIn),
                   ),
                 ],
               ),

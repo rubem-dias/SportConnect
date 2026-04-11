@@ -47,7 +47,7 @@
 
 ---
 
-### TASK-I18N-002 · register_screen.dart
+### ✅ TASK-I18N-002 · register_screen.dart
 **Esforço:** M  
 **Strings a extrair (~25):**
 

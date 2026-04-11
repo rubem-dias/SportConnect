@@ -308,6 +308,84 @@ abstract class AppLocalizations {
   /// **'Username indisponível'**
   String get registerUsernameTaken;
 
+  /// No description provided for @registerStep.
+  ///
+  /// In pt, this message translates to:
+  /// **'Etapa {step} de {total}'**
+  String registerStep(int step, int total);
+
+  /// No description provided for @registerPasswordLowercase.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inclua ao menos 1 letra minúscula'**
+  String get registerPasswordLowercase;
+
+  /// No description provided for @registerPasswordNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inclua ao menos 1 número'**
+  String get registerPasswordNumber;
+
+  /// No description provided for @registerPasswordSpecial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inclua ao menos 1 caractere especial'**
+  String get registerPasswordSpecial;
+
+  /// No description provided for @registerConfirmPasswordHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme sua senha'**
+  String get registerConfirmPasswordHint;
+
+  /// No description provided for @registerEmailChecking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Validando e-mail...'**
+  String get registerEmailChecking;
+
+  /// No description provided for @registerUsernameChecking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Validando username...'**
+  String get registerUsernameChecking;
+
+  /// No description provided for @registerUsernameHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use 3 a 20 caracteres: letras, números ou _'**
+  String get registerUsernameHelper;
+
+  /// No description provided for @registerAddPhoto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar foto (opcional)'**
+  String get registerAddPhoto;
+
+  /// No description provided for @registerAlreadyHaveAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já tem conta?'**
+  String get registerAlreadyHaveAccount;
+
+  /// No description provided for @registerSignIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar'**
+  String get registerSignIn;
+
+  /// No description provided for @registerAwaitEmailValidation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarde a validação do e-mail.'**
+  String get registerAwaitEmailValidation;
+
+  /// No description provided for @registerAwaitUsernameValidation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarde a validação do username.'**
+  String get registerAwaitUsernameValidation;
+
   /// No description provided for @registerBack.
   ///
   /// In pt, this message translates to:

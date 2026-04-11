@@ -115,6 +115,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerUsernameTaken => 'Username unavailable';
 
   @override
+  String registerStep(int step, int total) {
+    return 'Step $step of $total';
+  }
+
+  @override
+  String get registerPasswordLowercase => 'Include at least 1 lowercase letter';
+
+  @override
+  String get registerPasswordNumber => 'Include at least 1 number';
+
+  @override
+  String get registerPasswordSpecial => 'Include at least 1 special character';
+
+  @override
+  String get registerConfirmPasswordHint => 'Confirm your password';
+
+  @override
+  String get registerEmailChecking => 'Validating e-mail...';
+
+  @override
+  String get registerUsernameChecking => 'Validating username...';
+
+  @override
+  String get registerUsernameHelper =>
+      'Use 3 to 20 characters: letters, numbers or _';
+
+  @override
+  String get registerAddPhoto => 'Add photo (optional)';
+
+  @override
+  String get registerAlreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String get registerSignIn => 'Sign in';
+
+  @override
+  String get registerAwaitEmailValidation =>
+      'Please wait for e-mail validation.';
+
+  @override
+  String get registerAwaitUsernameValidation =>
+      'Please wait for username validation.';
+
+  @override
   String get registerBack => 'Back';
 
   @override

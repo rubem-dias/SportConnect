@@ -404,6 +404,18 @@ abstract class AppLocalizations {
   /// **'Criar conta'**
   String get registerSubmit;
 
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Onboarding'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingLocationNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Essa permissão pode ser alterada depois nas configurações.'**
+  String get onboardingLocationNote;
+
   /// No description provided for @onboardingSportsTitle.
   ///
   /// In pt, this message translates to:

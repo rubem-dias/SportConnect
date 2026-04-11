@@ -54,6 +54,8 @@
   "registerNext": "Continue",
   "registerSubmit": "Create account",
 
+  "onboardingTitle": "Onboarding",
+  "onboardingLocationNote": "This permission can be changed later in settings.",
   "onboardingSportsTitle": "Which sports interest you?",
   "onboardingSportsSubtitle": "Select as many as you want to personalize your feed",
   "onboardingLevelTitle": "What is your current level?",

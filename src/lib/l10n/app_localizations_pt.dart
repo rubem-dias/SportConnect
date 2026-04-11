@@ -167,6 +167,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get registerSubmit => 'Criar conta';
 
   @override
+  String get onboardingTitle => 'Onboarding';
+
+  @override
+  String get onboardingLocationNote =>
+      'Essa permissão pode ser alterada depois nas configurações.';
+
+  @override
   String get onboardingSportsTitle => 'Quais esportes te interessam?';
 
   @override

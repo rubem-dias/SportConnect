@@ -168,6 +168,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerSubmit => 'Create account';
 
   @override
+  String get onboardingTitle => 'Onboarding';
+
+  @override
+  String get onboardingLocationNote =>
+      'This permission can be changed later in settings.';
+
+  @override
   String get onboardingSportsTitle => 'Which sports interest you?';
 
   @override

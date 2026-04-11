@@ -79,7 +79,7 @@
 
 ---
 
-### TASK-I18N-003 · onboarding_screen.dart
+### ✅ TASK-I18N-003 · onboarding_screen.dart
 **Esforço:** M  
 **Strings a extrair (~28):**
 

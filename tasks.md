@@ -261,11 +261,11 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-015
 
-- [ ] Carrossel horizontal de avatares no topo do feed
-- [ ] Tela de visualização de story (fullscreen, barra de progresso)
+- [x] Carrossel horizontal de avatares no topo do feed
+- [x] Tela de visualização de story (fullscreen, barra de progresso)
 - [ ] Criação de story: foto/vídeo + texto sobreposto
-- [ ] Expiração em 24h (controle via back-end)
-- [ ] Indicador de story não visto (anel colorido)
+- [x] Expiração em 24h (controle via back-end)
+- [x] Indicador de story não visto (anel colorido)
 
 **Aceite:** Story abre fullscreen com progresso animado, expira no prazo
 
@@ -465,12 +465,12 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-027
 
-- [ ] Criação de grupo: nome, foto, descrição, esporte, privado/público
-- [ ] Adicionar / remover membros
-- [ ] Info do grupo: membros, mídia compartilhada, admin
-- [ ] Papel de admin: remover membros, fixar mensagens, editar info
-- [ ] Convite por link compartilhável
-- [ ] Canais (broadcast): somente admins escrevem, todos leem
+- [x] Criação de grupo: nome, foto, descrição, esporte, privado/público
+- [x] Adicionar / remover membros
+- [x] Info do grupo: membros, mídia compartilhada, admin
+- [x] Papel de admin: remover membros, fixar mensagens, editar info
+- [x] Convite por link compartilhável
+- [x] Canais (broadcast): somente admins escrevem, todos leem
 - [ ] Mencionar @todos ou @usuário
 
 **Aceite:** Grupo criado; admin consegue fixar mensagem; link de convite funciona
@@ -546,12 +546,12 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-006
 
-- [ ] Barra de busca no topo (estilo Telegram: fica em cima ao digitar)
-- [ ] Tabs de resultado: Tudo / Usuários / Grupos / Posts / Exercícios
-- [ ] Histórico de buscas recentes (local)
-- [ ] Busca de hashtag → feed filtrado
-- [ ] Sugestões em tempo real (debounce 300ms)
-- [ ] Estado vazio com sugestão de trending
+- [x] Barra de busca no topo (estilo Telegram: fica em cima ao digitar)
+- [x] Tabs de resultado: Tudo / Usuários / Grupos / Posts / Exercícios
+- [x] Histórico de buscas recentes (local)
+- [x] Busca de hashtag → feed filtrado
+- [x] Sugestões em tempo real (debounce 300ms)
+- [x] Estado vazio com sugestão de trending
 
 **Aceite:** Resultado aparece em < 500ms após parar de digitar
 
@@ -561,10 +561,10 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 3  
 **Dependências:** TASK-033
 
-- [ ] Seção de trending: hashtags mais usadas hoje
-- [ ] Posts em alta (mais reactions nas últimas 24h)
-- [ ] Sugestão de grupos para entrar baseado nos esportes do perfil
-- [ ] Sugestão de usuários para seguir
+- [x] Seção de trending: hashtags mais usadas hoje
+- [x] Posts em alta (mais reactions nas últimas 24h)
+- [x] Sugestão de grupos para entrar baseado nos esportes do perfil
+- [x] Sugestão de usuários para seguir
 
 **Aceite:** Trending atualiza ao puxar para baixo
 
@@ -590,11 +590,11 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-035
 
-- [ ] Tela de notificações com lista cronológica
-- [ ] Tipos: nova reaction, novo comentário, novo seguidor, PR batido por amigo, menção
-- [ ] Ícone diferente por tipo
-- [ ] Marcar como lida (tap) / marcar todas como lidas
-- [ ] Badge na aba com contagem de não lidas
+- [x] Tela de notificações com lista cronológica
+- [x] Tipos: nova reaction, novo comentário, novo seguidor, PR batido por amigo, menção
+- [x] Ícone diferente por tipo
+- [x] Marcar como lida (tap) / marcar todas como lidas
+- [x] Badge na aba com contagem de não lidas
 - [ ] Configurações: toggle por tipo de notificação
 
 **Aceite:** Badge some ao abrir a aba; configurações persistem entre sessões

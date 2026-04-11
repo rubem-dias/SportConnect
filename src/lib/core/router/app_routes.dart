@@ -36,6 +36,7 @@ abstract final class AppRoutes {
   static const editProfile = '/profile/edit';
   static const notifications = '/notifications';
   static const search = '/search';
+  static const explore = '/explore';
   static const goals = '/goals';
 
   // Helpers for parameterized routes

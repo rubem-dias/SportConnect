@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_loading_skeleton.dart';
 import '../providers/chat_providers.dart';
 import '../widgets/conversation_tile.dart';
+import '../widgets/create_group_sheet.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -44,8 +45,8 @@ class ChatListScreen extends ConsumerWidget {
                 : AppColors.textSecondaryLight,
           ),
           IconButton(
-            icon: const Icon(Icons.edit_rounded),
-            onPressed: () {},
+            icon: const Icon(Icons.group_add_rounded),
+            onPressed: () => showCreateGroupSheet(context),
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,

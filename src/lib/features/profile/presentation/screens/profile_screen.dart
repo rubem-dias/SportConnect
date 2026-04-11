@@ -8,6 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_loading_skeleton.dart';
 import '../../../feed/data/models/post_model.dart';
+import '../../../notifications/presentation/providers/notifications_provider.dart';
 import '../../data/models/user_profile_model.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/edit_profile_sheet.dart';
@@ -153,9 +154,8 @@ class _ProfileSliverAppBar extends ConsumerWidget {
       automaticallyImplyLeading: !profile.isMe,
       actions: [
         if (profile.isMe)
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.push(AppRoutes.notifications),
+          _NotificationsBell(
+            onTap: () => context.push(AppRoutes.notifications),
           ),
         if (!profile.isMe)
           PopupMenuButton<String>(
@@ -943,6 +943,26 @@ class _ProfileSkeleton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationsBell extends ConsumerWidget {
+  const _NotificationsBell({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(unreadNotificationsCountProvider);
+    return IconButton(
+      onPressed: onTap,
+      icon: Badge(
+        isLabelVisible: count > 0,
+        label: count > 9 ? const Text('9+') : Text('$count'),
+        backgroundColor: AppColors.error,
+        child: const Icon(Icons.notifications_outlined),
       ),
     );
   }

@@ -21,6 +21,8 @@ import '../../features/prs/data/models/pr_model.dart';
 import '../../features/prs/presentation/screens/add_pr_screen.dart';
 import '../../features/prs/presentation/screens/pr_detail_screen.dart';
 import '../../features/prs/presentation/screens/prs_screen.dart';
+import '../../features/search/presentation/screens/explore_screen.dart';
+import '../../features/search/presentation/screens/search_screen.dart';
 import '../../shared/providers/auth_provider.dart';
 import 'app_routes.dart';
 
@@ -179,6 +181,18 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.notifications,
         builder: (_, __) => const NotificationsScreen(),
+      ),
+
+      // Search
+      GoRoute(
+        path: AppRoutes.search,
+        builder: (_, __) => const SearchScreen(),
+      ),
+
+      // Explore / Trending
+      GoRoute(
+        path: AppRoutes.explore,
+        builder: (_, __) => const ExploreScreen(),
       ),
     ],
     errorBuilder: (_, state) => _NotFoundScreen(error: state.error),

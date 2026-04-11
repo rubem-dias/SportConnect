@@ -10,6 +10,7 @@ import '../providers/chat_providers.dart';
 import '../widgets/chat_input_bar.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/typing_indicator.dart';
+import 'group_info_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({
@@ -89,10 +90,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         surfaceTintColor: Colors.transparent,
         leadingWidth: 40,
         titleSpacing: 0,
-        title: _ChatAppBarTitle(
-          conversation: widget.conversation,
-          conversationId: widget.conversationId,
-          isDark: isDark,
+        title: GestureDetector(
+          onTap: () {
+            final conv = widget.conversation;
+            if (conv != null &&
+                (conv.type == ConversationType.group ||
+                    conv.type == ConversationType.channel)) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => GroupInfoScreen(conversation: conv),
+                ),
+              );
+            }
+          },
+          child: _ChatAppBarTitle(
+            conversation: widget.conversation,
+            conversationId: widget.conversationId,
+            isDark: isDark,
+          ),
         ),
         actions: [
           IconButton(

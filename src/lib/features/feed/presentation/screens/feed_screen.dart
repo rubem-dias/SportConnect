@@ -12,6 +12,7 @@ import '../providers/feed_provider.dart';
 import '../widgets/create_post_sheet.dart';
 import '../widgets/post_card.dart';
 import '../widgets/pr_card.dart';
+import '../widgets/stories_bar.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -94,6 +95,24 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               controller: _scrollController,
               slivers: [
                 _FeedAppBar(isDark: isDark),
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: isDark
+                        ? AppColors.surfaceDark
+                        : AppColors.surfaceLight,
+                    child: Column(
+                      children: [
+                        const StoriesBar(),
+                        Divider(
+                          height: 1,
+                          color: isDark
+                              ? AppColors.borderDark
+                              : AppColors.borderLight,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -187,8 +206,12 @@ class _FeedAppBar extends StatelessWidget {
       ),
       actions: [
         IconButton(
+          icon: const Icon(Icons.explore_outlined),
+          onPressed: () => context.push(AppRoutes.explore),
+        ),
+        IconButton(
           icon: const Icon(Icons.search_rounded),
-          onPressed: () {},
+          onPressed: () => context.push(AppRoutes.search),
         ),
         IconButton(
           icon: const Icon(Icons.add_box_outlined),

@@ -7,7 +7,9 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/onboarding_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/chat/data/models/conversation_model.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
+import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/feed/data/models/post_model.dart';
 import '../../features/feed/presentation/screens/comments_screen.dart';
 import '../../features/feed/presentation/screens/feed_screen.dart';
@@ -130,6 +132,21 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: AppRoutes.chat,
                 builder: (_, __) => const ChatListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':conversationId',
+                    builder: (_, state) {
+                      final conv = state.extra is ConversationModel
+                          ? state.extra as ConversationModel
+                          : null;
+                      return ChatScreen(
+                        conversationId:
+                            state.pathParameters['conversationId'] ?? '',
+                        conversation: conv,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

@@ -407,12 +407,12 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-006
 
-- [ ] Conexão WebSocket com reconexão automática
-- [ ] Protocolo de mensagens: `{type, conversationId, payload, timestamp}`
-- [ ] Tipos: `message`, `typing`, `read`, `reaction`, `presence`
-- [ ] `ChatRepository` com Hive para persistir mensagens localmente
-- [ ] Provider de conexão com status (connected/reconnecting/offline)
-- [ ] Fila de mensagens pendentes (enviar ao reconectar)
+- [x] Conexão WebSocket com reconexão automática
+- [x] Protocolo de mensagens: `{type, conversationId, payload, timestamp}`
+- [x] Tipos: `message`, `typing`, `read`, `reaction`, `presence`
+- [x] `ChatRepository` com Hive para persistir mensagens localmente
+- [x] Provider de conexão com status (connected/reconnecting/offline)
+- [x] Fila de mensagens pendentes (enviar ao reconectar)
 
 **Aceite:** Mensagem enviada offline entra na fila e é enviada ao reconectar
 
@@ -422,13 +422,13 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-025, TASK-004
 
-- [ ] Layout idêntico ao Telegram: avatar + nome + última mensagem + tempo + badge de não lidas
-- [ ] DMs e grupos misturados, ordenados por última atividade
-- [ ] Indicador de online (ponto verde no avatar)
-- [ ] Swipe para arquivar / mutar conversa
-- [ ] Long press: opções (arquivar, mutar, deletar)
+- [x] Layout idêntico ao Telegram: avatar + nome + última mensagem + tempo + badge de não lidas
+- [x] DMs e grupos misturados, ordenados por última atividade
+- [x] Indicador de online (ponto verde no avatar)
+- [x] Swipe para arquivar / mutar conversa
+- [x] Long press: opções (arquivar, mutar, deletar)
 - [ ] Busca por nome na lista
-- [ ] Skeleton de carregamento na primeira carga
+- [x] Skeleton de carregamento na primeira carga
 
 **Aceite:** Lista atualiza em tempo real ao chegar mensagem nova sem reload
 
@@ -438,24 +438,24 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 13  
 **Dependências:** TASK-026
 
-- [ ] `ListView.builder` invertido para mensagens (mais recentes embaixo)
-- [ ] Bubble de mensagem:
+- [x] `ListView.builder` invertido para mensagens (mais recentes embaixo)
+- [x] Bubble de mensagem:
   - Alinhamento esquerda (outro) / direita (eu)
   - Canto arredondado estilo Telegram
   - Status: enviando ⏳ / enviado ✓ / lido ✓✓
   - Timestamp ao lado ou abaixo
-- [ ] Agrupamento por dia com separador de data
-- [ ] Input bar:
+- [x] Agrupamento por dia com separador de data
+- [x] Input bar:
   - Campo de texto expansível (até 4 linhas)
   - Botão de mídia (câmera, galeria, arquivo)
   - Botão de áudio (pressionar e segurar)
   - Botão enviar animado
-- [ ] Reply: swipe na mensagem para responder
-- [ ] Reaction: long press na mensagem abre emoji picker compacto
-- [ ] Indicador "fulano está digitando..."
+- [x] Reply: swipe na mensagem para responder
+- [x] Reaction: long press na mensagem abre emoji picker compacto
+- [x] Indicador "fulano está digitando..."
 - [ ] Scroll rápido ao clicar no nome no header → vai para primeira mensagem
-- [ ] Load mais mensagens ao rolar para cima (paginação)
-- [ ] Card especial para compartilhamento de PR
+- [x] Load mais mensagens ao rolar para cima (paginação)
+- [x] Card especial para compartilhamento de PR
 
 **Aceite:** Chat de 1000 mensagens rola fluido; reply e reactions funcionam offline
 

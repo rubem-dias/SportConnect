@@ -42,6 +42,7 @@ class ChatWebSocketService {
   }) : _storage = storage ?? const FlutterSecureStorage();
 
   final String? wsUrl;
+  // ignore: unused_field
   final FlutterSecureStorage _storage;
 
   final _messageCtrl =
@@ -60,6 +61,7 @@ class ChatWebSocketService {
 
   final _pendingQueue = <WsEvent>[];
   Timer? _reconnectTimer;
+  // ignore: unused_field
   int _reconnectAttempts = 0;
 
   // ignore: unused_field
@@ -99,6 +101,7 @@ class ChatWebSocketService {
     _connectionCtrl.add(s);
   }
 
+  // ignore: unused_element
   void _flushQueue() {
     final copy = List<WsEvent>.from(_pendingQueue);
     _pendingQueue.clear();

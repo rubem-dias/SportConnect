@@ -483,9 +483,9 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-002
 
-- [ ] Integrar `geolocator` package
-- [ ] Solicitar permissão com explicação clara (LGPD/GDPR)
-- [ ] Modo de privacidade: Exato / Bairro / Desativado
+- [x] Integrar `geolocator` package
+- [x] Solicitar permissão com explicação clara (LGPD/GDPR)
+- [x] Modo de privacidade: Exato / Bairro / Desativado
 - [ ] Atualizar localização no back-end em background (modo bairro = aproximado)
 - [ ] Parar atualização quando app em background se usuário não autorizou
 
@@ -499,11 +499,11 @@ Adicionar ao `pubspec.yaml`:
 
 - [ ] Mapa (`flutter_map` com OpenStreetMap ou Google Maps)
 - [ ] Pins de usuários e academias no mapa
-- [ ] Lista abaixo do mapa (alternativa ao mapa para acessibilidade)
-- [ ] Filtros: raio (500m, 1km, 5km), esporte, nível
-- [ ] Bottom sheet ao clicar em pin: mini-perfil do usuário
-- [ ] Botão "Treinar junto" no mini-perfil → envia request
-- [ ] Academias: nome, horário, foto, link para maps
+- [x] Lista abaixo do mapa (alternativa ao mapa para acessibilidade)
+- [x] Filtros: raio (500m, 1km, 5km), esporte, nível
+- [x] Bottom sheet ao clicar em pin: mini-perfil do usuário
+- [x] Botão "Treinar junto" no mini-perfil → envia request
+- [x] Academias: nome, horário, foto, link para maps
 
 **Aceite:** Pins aparecem em < 2s; filter muda pins em tempo real
 
@@ -515,12 +515,12 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 8  
 **Dependências:** TASK-008, TASK-020
 
-- [ ] Header: foto, nome, username, bio, esportes (badges)
-- [ ] Stats bar: posts / seguidores / seguindo
-- [ ] Tabs: Posts | PRs | Conquistas
-- [ ] Editar perfil (inline ou tela separada)
+- [x] Header: foto, nome, username, bio, esportes (badges)
+- [x] Stats bar: posts / seguidores / seguindo
+- [x] Tabs: Posts | PRs | Conquistas
+- [x] Editar perfil (inline ou tela separada)
 - [ ] Trocar foto de perfil (galeria + câmera + crop circular)
-- [ ] Conquistas: grid de badges com nome e como desbloquear
+- [x] Conquistas: grid de badges com nome e como desbloquear
 
 **Aceite:** Edição de nome reflete imediatamente no header sem reload
 
@@ -530,11 +530,11 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-031
 
-- [ ] Mesmo layout, mas com botão Seguir / Seguindo / Solicitar (perfil privado)
-- [ ] Botão "Mensagem" abre DM
+- [x] Mesmo layout, mas com botão Seguir / Seguindo / Solicitar (perfil privado)
+- [x] Botão "Mensagem" abre DM
 - [ ] Botão "Treinar junto" (se próximo)
-- [ ] Posts públicos visíveis; PRs públicos visíveis
-- [ ] Bloquear usuário (via long press no header ou menu)
+- [x] Posts públicos visíveis; PRs públicos visíveis
+- [x] Bloquear usuário (via long press no header ou menu)
 
 **Aceite:** Seguir atualiza contador em tempo real; bloquear remove das listas
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -9,8 +9,8 @@ import '../../../../shared/widgets/app_avatar.dart';
 import '../../data/models/post_model.dart';
 
 /// Card destacado para posts do tipo Personal Record.
-/// Exibe fundo verde escuro com badge de troféu, diferenciando visualmente
-/// do PostCard padrão.
+/// Exibe fundo verde escuro com badge de trofÃ©u, diferenciando visualmente
+/// do PostCard padrÃ£o.
 class PRCard extends StatelessWidget {
   const PRCard({required this.post, super.key, this.onComment, this.onShare});
 
@@ -36,8 +36,8 @@ class PRCard extends StatelessWidget {
     final unit = data['unit']?.toString() ?? '';
     final reps = data['reps'];
     if (exercise.isEmpty && value.isEmpty) return '';
-    if (reps != null) return '$exercise — $value$unit × $reps reps';
-    return '$exercise — $value$unit';
+    if (reps != null) return '$exercise â€” $value$unit Ã— $reps reps';
+    return '$exercise â€” $value$unit';
   }
 
   @override
@@ -56,10 +56,10 @@ class PRCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.prGreen.withOpacity(0.4)),
+        border: Border.all(color: AppColors.prGreen.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.prGreen.withOpacity(0.15),
+            color: AppColors.prGreen.withValues(alpha: 0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -133,14 +133,14 @@ class _PRHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.prGreen.withOpacity(0.2),
+            color: AppColors.prGreen.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(color: AppColors.prGreen.withOpacity(0.5)),
+            border: Border.all(color: AppColors.prGreen.withValues(alpha: 0.5)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🏆', style: TextStyle(fontSize: 14)),
+              const Text('ðŸ†', style: TextStyle(fontSize: 14)),
               const SizedBox(width: 4),
               Text(
                 context.l10n.prCardNewBadge,
@@ -171,9 +171,9 @@ class _PRValueBox extends StatelessWidget {
         vertical: AppSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: AppColors.prGreen.withOpacity(0.1),
+        color: AppColors.prGreen.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.prGreen.withOpacity(0.3)),
+        border: Border.all(color: AppColors.prGreen.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,
@@ -206,7 +206,7 @@ class _PRActionBar extends StatelessWidget {
     return Row(
       children: [
         if (_totalReactions > 0) ...[
-          const Text('🔥', style: TextStyle(fontSize: 14)),
+          const Text('ðŸ”¥', style: TextStyle(fontSize: 14)),
           const SizedBox(width: 4),
           Text(
             '$_totalReactions',
@@ -258,3 +258,4 @@ class _PRAction extends StatelessWidget {
     );
   }
 }
+

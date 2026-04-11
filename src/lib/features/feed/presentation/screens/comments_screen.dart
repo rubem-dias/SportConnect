@@ -1,9 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/extensions/l10n_extension.dart';
 
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_endpoints.dart';
@@ -12,6 +9,7 @@ import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../shared/widgets/app_avatar.dart';
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../data/models/comment_model.dart';
 import '../../data/models/post_model.dart';
 
@@ -43,7 +41,7 @@ List<CommentModel> _mockComments(String postId) => [
         id: 'c1',
         postId: postId,
         userId: 'u2',
-        content: 'Incrível! Continua assim 💪',
+        content: 'IncrÃ­vel! Continua assim ðŸ’ª',
         createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
         userName: 'Maria Silva',
       ),
@@ -51,15 +49,15 @@ List<CommentModel> _mockComments(String postId) => [
         id: 'c2',
         postId: postId,
         userId: 'u3',
-        content: 'Que evolução! Qual protocolo você está seguindo?',
+        content: 'Que evoluÃ§Ã£o! Qual protocolo vocÃª estÃ¡ seguindo?',
         createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-        userName: 'João Santos',
+        userName: 'JoÃ£o Santos',
       ),
       CommentModel(
         id: 'c3',
         postId: postId,
         userId: 'u4',
-        content: 'Arrasou! 🔥🔥🔥',
+        content: 'Arrasou! ðŸ”¥ðŸ”¥ðŸ”¥',
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
         userName: 'Ana Costa',
         replyToId: 'c1',
@@ -109,7 +107,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
       userId: 'me',
       content: text,
       createdAt: DateTime.now(),
-      userName: 'Você',
+      userName: 'VocÃª',
       replyToId: _replyingTo?.id,
       replyToUserName: _replyingTo?.userName,
     );
@@ -192,7 +190,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('💬', style: TextStyle(fontSize: 40)),
+                        const Text('ðŸ’¬', style: TextStyle(fontSize: 40)),
                         const SizedBox(height: AppSpacing.md),
                         Text(context.l10n.commentsEmpty),
                       ],
@@ -413,7 +411,7 @@ class _HashtagText extends StatelessWidget {
   }
 
   List<String> _parse(String text) {
-    final regex = RegExp(r'([#@][a-zA-ZÀ-ÿ0-9_]+)');
+    final regex = RegExp(r'([#@][a-zA-Z\u00C0-\u00FF0-9_]+)');
     final parts = <String>[];
     var lastEnd = 0;
 
@@ -448,7 +446,7 @@ class _ReplyBanner extends StatelessWidget {
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm,
       ),
-      color: AppColors.primary.withOpacity(0.08),
+      color: AppColors.primary.withValues(alpha: 0.08),
       child: Row(
         children: [
           const Icon(Icons.reply_rounded, size: 14, color: AppColors.primary),
@@ -561,7 +559,7 @@ class _CommentInput extends StatelessWidget {
                       icon: const Icon(Icons.send_rounded),
                       color: AppColors.primary,
                       style: IconButton.styleFrom(
-                        backgroundColor: AppColors.primary.withOpacity(0.12),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                       ),
                     ),
             ),
@@ -579,7 +577,7 @@ class _InlineReactionPicker extends StatelessWidget {
 
   final void Function(String) onSelect;
 
-  static const _emojis = ['❤️', '🔥', '💪', '🏆', '👏', '😮'];
+  static const _emojis = ['â¤ï¸', 'ðŸ”¥', 'ðŸ’ª', 'ðŸ†', 'ðŸ‘', 'ðŸ˜®'];
 
   @override
   Widget build(BuildContext context) {
@@ -607,3 +605,4 @@ class _InlineReactionPicker extends StatelessWidget {
     );
   }
 }
+

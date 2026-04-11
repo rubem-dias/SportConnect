@@ -1,4 +1,4 @@
-import 'package:confetti/confetti.dart';
+﻿import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -138,7 +138,7 @@ class _GoalsContent extends StatelessWidget {
               isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
-          title: Text('Metas', style: AppTypography.titleLarge),
+          title: const Text('Metas', style: AppTypography.titleLarge),
           bottom: TabBar(
             controller: tabCtrl,
             labelColor: AppColors.primary,
@@ -152,7 +152,7 @@ class _GoalsContent extends StatelessWidget {
                 text: 'Em andamento${state.active.isNotEmpty ? ' (${state.active.length})' : ''}',
               ),
               Tab(
-                text: 'Concluídas${state.completed.isNotEmpty ? ' (${state.completed.length})' : ''}',
+                text: 'ConcluÃ­das${state.completed.isNotEmpty ? ' (${state.completed.length})' : ''}',
               ),
               Tab(
                 text: 'Expiradas${state.expired.isNotEmpty ? ' (${state.expired.length})' : ''}',
@@ -166,13 +166,13 @@ class _GoalsContent extends StatelessWidget {
         children: [
           _GoalsList(
             goals: state.active,
-            emptyMessage: 'Nenhuma meta ativa.\nCrie uma meta para começar!',
+            emptyMessage: 'Nenhuma meta ativa.\nCrie uma meta para comeÃ§ar!',
             isDark: isDark,
             onGoalCompleted: onGoalCompleted,
           ),
           _GoalsList(
             goals: state.completed,
-            emptyMessage: 'Nenhuma meta concluída ainda.',
+            emptyMessage: 'Nenhuma meta concluÃ­da ainda.',
             isDark: isDark,
           ),
           _GoalsList(
@@ -253,7 +253,7 @@ class _GoalCard extends ConsumerWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.15),
+          color: AppColors.error.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Icon(Icons.archive_outlined, color: AppColors.error),
@@ -269,14 +269,14 @@ class _GoalCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isCompleted
-                ? AppColors.prGold.withOpacity(0.4)
+                ? AppColors.prGold.withValues(alpha: 0.4)
                 : isDark
                     ? AppColors.borderDark
                     : AppColors.borderLight,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -311,13 +311,13 @@ class _GoalCard extends ConsumerWidget {
                   ),
                 ),
                 if (isCompleted)
-                  const Text('🏆', style: TextStyle(fontSize: 20)),
+                  const Text('ðŸ†', style: TextStyle(fontSize: 20)),
                 if (isActive && goal.daysRemaining <= 3)
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.12),
+                      color: AppColors.error.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                     child: Text(
@@ -392,10 +392,10 @@ class _GoalCard extends ConsumerWidget {
   }
 
   String _goalEmoji(GoalType type) => switch (type) {
-        GoalType.bodyWeight => '⚖️',
-        GoalType.specificPR => '🏋️',
-        GoalType.weeklyFrequency => '📅',
-        GoalType.monthlyDistance => '🏃',
+        GoalType.bodyWeight => 'âš–ï¸',
+        GoalType.specificPR => 'ðŸ‹ï¸',
+        GoalType.weeklyFrequency => 'ðŸ“…',
+        GoalType.monthlyDistance => 'ðŸƒ',
       };
 }
 
@@ -441,7 +441,7 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
         child: LinearProgressIndicator(
           value: _anim.value,
           minHeight: 8,
-          backgroundColor: widget.color.withOpacity(0.12),
+          backgroundColor: widget.color.withValues(alpha: 0.12),
           valueColor: AlwaysStoppedAnimation(widget.color),
         ),
       ),
@@ -573,7 +573,7 @@ class _CreateGoalSheetState extends ConsumerState<_CreateGoalSheet> {
   }
 }
 
-// Step 1 — type
+// Step 1 â€” type
 
 class _TypeStep extends StatelessWidget {
   const _TypeStep({required this.selected, required this.onSelect, super.key});
@@ -589,7 +589,7 @@ class _TypeStep extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Tipo de meta', style: AppTypography.titleMedium),
+          const Text('Tipo de meta', style: AppTypography.titleMedium),
           const SizedBox(height: AppSpacing.lg),
           ...GoalType.values.map((t) => _TypeTile(
                 type: t,
@@ -624,7 +624,7 @@ class _TypeTile extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.08)
+              ? AppColors.primary.withValues(alpha: 0.08)
               : isDark
                   ? AppColors.surfaceVariantDark
                   : AppColors.surfaceVariantLight,
@@ -665,28 +665,28 @@ class _TypeTile extends StatelessWidget {
   }
 
   String _emoji(GoalType t) => switch (t) {
-        GoalType.bodyWeight => '⚖️',
-        GoalType.specificPR => '🏋️',
-        GoalType.weeklyFrequency => '📅',
-        GoalType.monthlyDistance => '🏃',
+        GoalType.bodyWeight => 'âš–ï¸',
+        GoalType.specificPR => 'ðŸ‹ï¸',
+        GoalType.weeklyFrequency => 'ðŸ“…',
+        GoalType.monthlyDistance => 'ðŸƒ',
       };
 
   String _label(GoalType t) => switch (t) {
         GoalType.bodyWeight => 'Peso corporal',
-        GoalType.specificPR => 'PR específico',
-        GoalType.weeklyFrequency => 'Frequência semanal',
-        GoalType.monthlyDistance => 'Distância mensal',
+        GoalType.specificPR => 'PR especÃ­fico',
+        GoalType.weeklyFrequency => 'FrequÃªncia semanal',
+        GoalType.monthlyDistance => 'DistÃ¢ncia mensal',
       };
 
   String _description(GoalType t) => switch (t) {
         GoalType.bodyWeight => 'Atingir um peso alvo',
         GoalType.specificPR => 'Bater um personal record',
-        GoalType.weeklyFrequency => 'Número de treinos por semana',
-        GoalType.monthlyDistance => 'Distância a percorrer no mês',
+        GoalType.weeklyFrequency => 'NÃºmero de treinos por semana',
+        GoalType.monthlyDistance => 'DistÃ¢ncia a percorrer no mÃªs',
       };
 }
 
-// Step 2 — values
+// Step 2 â€” values
 
 class _ValuesStep extends StatelessWidget {
   const _ValuesStep({
@@ -722,11 +722,11 @@ class _ValuesStep extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Detalhes da meta', style: AppTypography.titleMedium),
+          const Text('Detalhes da meta', style: AppTypography.titleMedium),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
             controller: titleCtrl,
-            label: 'Título',
+            label: 'TÃ­tulo',
             hint: 'Ex: Supino 100kg',
           ),
           const SizedBox(height: AppSpacing.md),
@@ -745,7 +745,7 @@ class _ValuesStep extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: unit,
+                  initialValue: unit,
                   decoration: const InputDecoration(labelText: 'Unidade'),
                   items: _units
                       .map((u) => DropdownMenuItem(value: u, child: Text(u)))
@@ -761,9 +761,9 @@ class _ValuesStep extends StatelessWidget {
           SwitchListTile(
             value: isPublic,
             onChanged: onPublicChanged,
-            title: const Text('Meta pública'),
+            title: const Text('Meta pÃºblica'),
             subtitle: const Text('Seus seguidores podem ver esta meta'),
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             contentPadding: EdgeInsets.zero,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -791,7 +791,7 @@ class _ValuesStep extends StatelessWidget {
   }
 }
 
-// Step 3 — deadline
+// Step 3 â€” deadline
 
 class _DeadlineStep extends StatelessWidget {
   const _DeadlineStep({
@@ -819,7 +819,7 @@ class _DeadlineStep extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Prazo', style: AppTypography.titleMedium),
+          const Text('Prazo', style: AppTypography.titleMedium),
           const SizedBox(height: AppSpacing.lg),
           InkWell(
             onTap: () async {
@@ -839,7 +839,7 @@ class _DeadlineStep extends StatelessWidget {
                     ? AppColors.surfaceVariantDark
                     : AppColors.surfaceVariantLight,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -896,3 +896,4 @@ class _DeadlineStep extends StatelessWidget {
     );
   }
 }
+

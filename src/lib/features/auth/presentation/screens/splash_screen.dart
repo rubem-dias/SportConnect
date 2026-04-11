@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../shared/providers/auth_provider.dart';
 import '../../../../../../core/router/app_routes.dart';
+import '../../../../shared/providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});

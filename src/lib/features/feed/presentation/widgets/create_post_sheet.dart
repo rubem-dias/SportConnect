@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
@@ -12,7 +12,7 @@ import '../../../prs/presentation/providers/prs_provider.dart';
 import '../../data/repositories/feed_repository_impl.dart';
 import '../providers/feed_provider.dart';
 
-// Rascunho salvo em memória (poderia ser Hive em produção)
+// Rascunho salvo em memÃ³ria (poderia ser Hive em produÃ§Ã£o)
 final _draftProvider = StateProvider<String>((ref) => '');
 
 enum _Privacy { everyone, followers, community }
@@ -333,7 +333,7 @@ class _PrivacyButton extends StatelessWidget {
         avatar: Icon(_privacyIcon(value), size: 14, color: AppColors.primary),
         label: Text(_privacyLabel(context, value),
             style: AppTypography.labelSmall.copyWith(color: AppColors.primary)),
-        backgroundColor: AppColors.primary.withOpacity(0.1),
+        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
         side: BorderSide.none,
         padding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
@@ -394,16 +394,16 @@ class _PRPreviewBanner extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.prGreen.withOpacity(0.15),
-            AppColors.primary.withOpacity(0.1),
+            AppColors.prGreen.withValues(alpha: 0.15),
+            AppColors.primary.withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.prGreen.withOpacity(0.4)),
+        border: Border.all(color: AppColors.prGreen.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Text('🏆', style: TextStyle(fontSize: 20)),
+          const Text('ðŸ†', style: TextStyle(fontSize: 20)),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -544,8 +544,8 @@ class _PRPickerSheet extends ConsumerWidget {
                           return ListTile(
                             leading: CircleAvatar(
                               backgroundColor:
-                                  AppColors.prGreen.withOpacity(0.15),
-                              child: const Text('🏆'),
+                                  AppColors.prGreen.withValues(alpha: 0.15),
+                              child: const Text('ðŸ†'),
                             ),
                             title: Text(s.exerciseName),
                             subtitle: Text(s.bestPR.displayValue),
@@ -564,3 +564,4 @@ class _PRPickerSheet extends ConsumerWidget {
     );
   }
 }
+

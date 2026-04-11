@@ -4,8 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'app_exception.dart';
 import 'api_endpoints.dart';
+import 'app_exception.dart';
 
 part 'api_client.g.dart';
 
@@ -33,7 +33,6 @@ class ApiClient {
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 30),
         sendTimeout: const Duration(seconds: 30),
-        responseType: ResponseType.json,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -46,10 +45,7 @@ class ApiClient {
     _dio.interceptors.addAll([
       _AuthInterceptor(_storage, _dio),
       PrettyDioLogger(
-        requestHeader: false,
         requestBody: true,
-        responseBody: true,
-        responseHeader: false,
         compact: false,
       ),
     ]);

@@ -113,7 +113,7 @@ class ChatListScreen extends ConsumerWidget {
                   direction: DismissDirection.endToStart,
                   background: _ArchiveBackground(),
                   confirmDismiss: (_) async {
-                    // TODO: arquivar via repository
+                    // TODO(rubem): arquivar via repository.
                     return false;
                   },
                   child: ConversationTile(
@@ -203,31 +203,31 @@ class _ConversationsSkeleton extends StatelessWidget {
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 7,
-      itemBuilder: (_, __) => Padding(
-        padding: const EdgeInsets.symmetric(
+      itemBuilder: (_, __) => const Padding(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         child: Row(
           children: [
-            const AppLoadingSkeleton(width: 52, height: 52, borderRadius: 26),
-            const SizedBox(width: AppSpacing.md),
+            AppLoadingSkeleton(width: 52, height: 52, borderRadius: 26),
+            SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: AppLoadingSkeleton(height: 14, borderRadius: 4),
                       ),
-                      const SizedBox(width: AppSpacing.xl),
+                      SizedBox(width: AppSpacing.xl),
                       AppLoadingSkeleton(
                           width: 36, height: 10, borderRadius: 4),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const AppLoadingSkeleton(height: 12, borderRadius: 4),
+                  SizedBox(height: 6),
+                  AppLoadingSkeleton(height: 12, borderRadius: 4),
                 ],
               ),
             ),

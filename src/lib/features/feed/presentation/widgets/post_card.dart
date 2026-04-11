@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
@@ -234,7 +234,6 @@ class _MediaGrid extends StatelessWidget {
           Expanded(
             child: _ImageTile(
               url: urls[0],
-              height: 200,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(AppRadius.md),
                 bottomLeft: Radius.circular(AppRadius.md),
@@ -315,9 +314,9 @@ class _MediaGrid extends StatelessWidget {
                   if (count > 4)
                     Positioned.fill(
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.black54,
-                          borderRadius: const BorderRadius.only(
+                          borderRadius: BorderRadius.only(
                             bottomRight: Radius.circular(AppRadius.md),
                           ),
                         ),
@@ -395,7 +394,7 @@ class _ActionBar extends StatefulWidget {
 }
 
 class _ActionBarState extends State<_ActionBar> {
-  static const _reactionEmojis = ['🔥', '💪', '🏆'];
+  static const _reactionEmojis = ['ðŸ”¥', 'ðŸ’ª', 'ðŸ†'];
 
   String? _myReaction;
 
@@ -488,7 +487,6 @@ class _ReactionChipState extends State<_ReactionChip>
       vsync: this,
       duration: const Duration(milliseconds: 150),
       lowerBound: 0.85,
-      upperBound: 1.0,
       value: 1.0,
     );
     _scale = _ctrl;
@@ -517,12 +515,12 @@ class _ReactionChipState extends State<_ReactionChip>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: widget.isActive
-                ? AppColors.primary.withOpacity(0.12)
+                ? AppColors.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
               color: widget.isActive
-                  ? AppColors.primary.withOpacity(0.4)
+                  ? AppColors.primary.withValues(alpha: 0.4)
                   : Colors.transparent,
             ),
           ),
@@ -601,11 +599,11 @@ class _ReactionPicker extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black26,
               blurRadius: 16,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -628,3 +626,4 @@ class _ReactionPicker extends StatelessWidget {
     );
   }
 }
+

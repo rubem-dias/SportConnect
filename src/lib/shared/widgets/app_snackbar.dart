@@ -56,5 +56,5 @@ abstract final class AppSnackbar {
       show(context, message: message, type: AppSnackbarType.error);
 
   static void info(BuildContext context, String message) =>
-      show(context, message: message, type: AppSnackbarType.info);
+      show(context, message: message);
 }

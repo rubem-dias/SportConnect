@@ -7,10 +7,7 @@ import '../../data/models/chat_message_model.dart';
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({
-    super.key,
-    required this.message,
-    required this.isMe,
-    required this.showSenderName,
+    required this.message, required this.isMe, required this.showSenderName, super.key,
     this.onLongPress,
     this.onSwipeReply,
   });
@@ -171,7 +168,7 @@ class _ReplyPreview extends StatelessWidget {
                 ? AppColors.primary.withAlpha(40)
                 : AppColors.primary.withAlpha(20)),
         borderRadius: BorderRadius.circular(8),
-        border: Border(
+        border: const Border(
           left: BorderSide(
             color: AppColors.primary,
             width: 3,
@@ -230,7 +227,7 @@ class _PRAttachment extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.prGreen.withAlpha(30),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.prGreen, width: 1),
+        border: Border.all(color: AppColors.prGreen),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -327,7 +324,7 @@ class _ReactionsRow extends StatelessWidget {
 }
 
 class DateSeparator extends StatelessWidget {
-  const DateSeparator({super.key, required this.date});
+  const DateSeparator({required this.date, super.key});
 
   final DateTime date;
 

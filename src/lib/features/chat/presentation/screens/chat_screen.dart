@@ -13,8 +13,7 @@ import '../widgets/typing_indicator.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({
-    super.key,
-    required this.conversationId,
+    required this.conversationId, super.key,
     this.conversation,
   });
 
@@ -294,7 +293,7 @@ class _MessageList extends ConsumerWidget {
                       Navigator.pop(context);
                       ref
                           .read(chatProvider(conversationId).notifier);
-                      // TODO: addReaction
+                      // TODO(rubem): implementar addReaction.
                     },
                     child: Text(e, style: const TextStyle(fontSize: 28)),
                   );

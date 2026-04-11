@@ -165,7 +165,7 @@ class _FeedAppBar extends StatelessWidget {
       elevation: 0,
       title: Row(
         children: [
-          Text(
+          const Text(
             'Sport',
             style: TextStyle(
               color: AppColors.primary,

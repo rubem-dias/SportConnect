@@ -3,9 +3,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../models/auth_token_model.dart';
 import '../models/user_model.dart';
-import '../../domain/repositories/auth_repository.dart';
 
 part 'auth_repository_impl.g.dart';
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,11 +29,11 @@ class _PrsScreenState extends ConsumerState<PrsScreen> {
     'costas',
     'pernas',
     'ombros',
-    'bíceps',
-    'tríceps',
+    'bÃ­ceps',
+    'trÃ­ceps',
     'core',
     'cardio',
-    'olímpico',
+    'olÃ­mpico',
     'outros',
   ];
 
@@ -271,11 +271,11 @@ class _PRsContent extends StatelessWidget {
       'costas' => l.muscleBack,
       'pernas' => l.muscleLegs,
       'ombros' => l.muscleShoulders,
-      'bíceps' => l.muscleBiceps,
-      'tríceps' => l.muscleTriceps,
+      'bÃ­ceps' => l.muscleBiceps,
+      'trÃ­ceps' => l.muscleTriceps,
       'core' => l.muscleCore,
       'cardio' => l.muscleCardio,
-      'olímpico' => l.muscleOlympic,
+      'olÃ­mpico' => l.muscleOlympic,
       'outros' => l.muscleOther,
       _ => group,
     };
@@ -298,7 +298,7 @@ class _HighlightsSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('🏆', style: TextStyle(fontSize: 18)),
+              const Text('ðŸ†', style: TextStyle(fontSize: 18)),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 context.l10n.prsHighlights,
@@ -336,7 +336,7 @@ class _HighlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emoji = rank == 1 ? '🥇' : rank == 2 ? '🥈' : '🥉';
+    final emoji = rank == 1 ? 'ðŸ¥‡' : rank == 2 ? 'ðŸ¥ˆ' : 'ðŸ¥‰';
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -344,13 +344,13 @@ class _HighlightCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.15),
-            AppColors.prGold.withOpacity(0.08),
+            AppColors.primary.withValues(alpha: 0.15),
+            AppColors.prGold.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.prGold.withOpacity(0.3),
+          color: AppColors.prGold.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -405,7 +405,7 @@ class _FilterChip extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : AppColors.borderLight.withOpacity(0.5),
+                : AppColors.borderLight.withValues(alpha: 0.5),
           ),
         ),
         child: Text(
@@ -446,7 +446,7 @@ class _ExercisePRCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               alignment: Alignment.center,
@@ -497,7 +497,7 @@ class _ExercisePRCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.prGreen.withOpacity(0.15),
+                      color: AppColors.prGreen.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                     child: Text(
@@ -525,16 +525,16 @@ class _ExercisePRCard extends StatelessWidget {
 
   String _muscleEmoji(String group) {
     return switch (group) {
-      'peito' => '🫁',
-      'costas' => '🔙',
-      'pernas' => '🦵',
-      'ombros' => '💪',
-      'bíceps' => '💪',
-      'tríceps' => '💪',
-      'core' => '🎯',
-      'cardio' => '🏃',
-      'olímpico' => '🏋️',
-      _ => '⚡',
+      'peito' => 'ðŸ«',
+      'costas' => 'ðŸ”™',
+      'pernas' => 'ðŸ¦µ',
+      'ombros' => 'ðŸ’ª',
+      'bÃ­ceps' => 'ðŸ’ª',
+      'trÃ­ceps' => 'ðŸ’ª',
+      'core' => 'ðŸŽ¯',
+      'cardio' => 'ðŸƒ',
+      'olÃ­mpico' => 'ðŸ‹ï¸',
+      _ => 'âš¡',
     };
   }
 
@@ -590,3 +590,4 @@ class _PRsError extends StatelessWidget {
     );
   }
 }
+

@@ -49,7 +49,6 @@ class MockFeedRepository implements FeedRepository {
         id: '1',
         userId: 'u1',
         userName: 'Mateus Corrêa',
-        userAvatar: null,
         content:
             'Treino de peito concluído 🔥 Batendo 120kg no supino pela primeira vez! A consistência está valendo.',
         mediaUrls: [
@@ -67,7 +66,6 @@ class MockFeedRepository implements FeedRepository {
         id: '2',
         userId: 'u2',
         userName: 'Fernanda Lima',
-        userAvatar: null,
         content: 'SUPINO 120KG! Nunca pensei que chegaria aqui. Gratidão ao @coach_paulo!',
         mediaUrls: [],
         reactions: {'🔥': 31, '💪': 22, '🏆': 15},
@@ -87,7 +85,6 @@ class MockFeedRepository implements FeedRepository {
         id: '3',
         userId: 'u3',
         userName: 'Rafael Souza',
-        userAvatar: null,
         content:
             'Semana de treinos intensa! Consegui bater minhas metas de volume essa semana. '
             'Continuando com a periodização que o coach passou. Foco total no campeonato de novembro.',
@@ -108,7 +105,6 @@ class MockFeedRepository implements FeedRepository {
         id: '4',
         userId: 'u4',
         userName: 'Camila Rocha',
-        userAvatar: null,
         content: 'Sub-20 minutos nos 5km! Meta de 2024 cumprida 🏃‍♀️',
         mediaUrls: [],
         reactions: {'🔥': 45, '💪': 30, '🏆': 20},
@@ -127,7 +123,6 @@ class MockFeedRepository implements FeedRepository {
         id: '5',
         userId: 'u5',
         userName: 'João Victor',
-        userAvatar: null,
         content:
             'Reflexão do dia: muita gente desiste quando as coisas ficam difíceis. '
             'Mas é exatamente nesse momento que o progresso acontece. '
@@ -147,7 +142,6 @@ class MockFeedRepository implements FeedRepository {
         id: '6',
         userId: 'u6',
         userName: 'Bruno Alves',
-        userAvatar: null,
         content: 'Agachamento 180kg! Esse foi pesado mas saiu limpo.',
         mediaUrls: [
           'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=800',
@@ -176,7 +170,6 @@ class MockFeedRepository implements FeedRepository {
         id: '7',
         userId: 'u7',
         userName: 'Ana Paula',
-        userAvatar: null,
         content: 'Yoga + corrida leve hoje. Recuperação ativa é parte do treino também!',
         mediaUrls: [
           'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800',
@@ -191,7 +184,6 @@ class MockFeedRepository implements FeedRepository {
         id: '8',
         userId: 'u8',
         userName: 'Carlos Mendes',
-        userAvatar: null,
         content: 'Deadlift 200kg. Próxima meta: 220.',
         mediaUrls: [],
         reactions: {'🔥': 77, '💪': 60, '🏆': 35},

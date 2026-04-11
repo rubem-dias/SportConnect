@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+﻿import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -106,12 +106,12 @@ class _PRDetailScreenState extends ConsumerState<PRDetailScreen> {
               ),
 
               // History list header
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                       AppSpacing.lg, AppSpacing.xl, AppSpacing.lg, AppSpacing.sm),
                   child: Text(
-                    'Histórico',
+                    'HistÃ³rico',
                     style: AppTypography.titleSmall,
                   ),
                 ),
@@ -211,7 +211,7 @@ class _PeriodFilter extends StatelessWidget {
                         border: Border.all(
                           color: selected == p
                               ? AppColors.primary
-                              : AppColors.borderLight.withOpacity(0.5),
+                              : AppColors.borderLight.withValues(alpha: 0.5),
                         ),
                       ),
                       alignment: Alignment.center,
@@ -288,7 +288,7 @@ class _PRChartState extends State<_PRChart> {
                 color: (widget.isDark
                         ? AppColors.borderDark
                         : AppColors.borderLight)
-                    .withOpacity(0.5),
+                    .withValues(alpha: 0.5),
                 strokeWidth: 1,
               ),
             ),
@@ -338,9 +338,9 @@ class _PRChartState extends State<_PRChart> {
                 ),
               ),
               rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                  ),
               topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                  ),
             ),
             lineTouchData: LineTouchData(
               touchCallback: (_, response) {
@@ -351,7 +351,7 @@ class _PRChartState extends State<_PRChart> {
               },
               touchTooltipData: LineTouchTooltipData(
                 getTooltipColor: (_) =>
-                    AppColors.primary.withOpacity(0.9),
+                    AppColors.primary.withValues(alpha: 0.9),
                 getTooltipItems: (spots) => spots.map((s) {
                   final pr = widget.history[s.spotIndex];
                   return LineTooltipItem(
@@ -370,7 +370,7 @@ class _PRChartState extends State<_PRChart> {
                 LineChartBarData(
                   spots: _trendLine(spots),
                   isCurved: true,
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   barWidth: 1.5,
                   dotData: const FlDotData(show: false),
                   dashArray: [6, 4],
@@ -384,7 +384,6 @@ class _PRChartState extends State<_PRChart> {
                 barWidth: 2.5,
                 isStrokeCapRound: true,
                 dotData: FlDotData(
-                  show: true,
                   getDotPainter: (spot, _, __, idx) {
                     final isBest = spot.y == maxY;
                     final isTouched = idx == _touchedIndex;
@@ -402,8 +401,8 @@ class _PRChartState extends State<_PRChart> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.primary.withOpacity(0.2),
-                      AppColors.primary.withOpacity(0.01),
+                      AppColors.primary.withValues(alpha: 0.2),
+                      AppColors.primary.withValues(alpha: 0.01),
                     ],
                   ),
                 ),
@@ -445,21 +444,21 @@ class _SinglePointChart extends StatelessWidget {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.08),
+          color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         alignment: Alignment.center,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🏆', style: TextStyle(fontSize: 32)),
+            const Text('ðŸ†', style: TextStyle(fontSize: 32)),
             const SizedBox(height: AppSpacing.sm),
             Text(pr.displayValue,
                 style: AppTypography.titleLarge
                     .copyWith(color: AppColors.primary)),
             Text(
-              'Registre mais PRs para ver o gráfico',
+              'Registre mais PRs para ver o grÃ¡fico',
               style: AppTypography.labelSmall.copyWith(
                   color: isDark
                       ? AppColors.textSecondaryDark
@@ -496,21 +495,21 @@ class _StatsRow extends StatelessWidget {
       child: Row(
         children: [
           _StatCard(
-            emoji: '🏆',
+            emoji: 'ðŸ†',
             label: 'Melhor',
             value: best.displayValue,
             color: AppColors.prGold,
           ),
           const SizedBox(width: AppSpacing.sm),
           _StatCard(
-            emoji: '📈',
-            label: 'Evolução',
+            emoji: 'ðŸ“ˆ',
+            label: 'EvoluÃ§Ã£o',
             value: '$improvementStr ${first.unit}',
             color: improvement >= 0 ? AppColors.prGreen : AppColors.error,
           ),
           const SizedBox(width: AppSpacing.sm),
           _StatCard(
-            emoji: '📋',
+            emoji: 'ðŸ“‹',
             label: 'Registros',
             value: '${history.length}',
             color: AppColors.primary,
@@ -541,9 +540,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -609,13 +608,13 @@ class _HistoryTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: isBest
-                    ? AppColors.prGold.withOpacity(0.15)
-                    : AppColors.primary.withOpacity(0.08),
+                    ? AppColors.prGold.withValues(alpha: 0.15)
+                    : AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
               child: Text(
-                isBest ? '🥇' : '📌',
+                isBest ? 'ðŸ¥‡' : 'ðŸ“Œ',
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -691,7 +690,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('📋', style: TextStyle(fontSize: 48)),
+          const Text('ðŸ“‹', style: TextStyle(fontSize: 48)),
           const SizedBox(height: AppSpacing.md),
           Text(context.l10n.prsEmptyFirstTime,
               style: AppTypography.titleSmall),
@@ -733,3 +732,4 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
+

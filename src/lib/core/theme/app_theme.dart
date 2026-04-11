@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
@@ -76,7 +76,7 @@ abstract final class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor:
             isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        indicatorColor: AppColors.primary.withOpacity(0.15),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.15),
         labelTextStyle: WidgetStateProperty.all(AppTypography.labelSmall),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -178,7 +178,7 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         backgroundColor: isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariantLight,
-        selectedColor: AppColors.primary.withOpacity(0.15),
+        selectedColor: AppColors.primary.withValues(alpha: 0.15),
         labelStyle: AppTypography.labelMedium,
         side: BorderSide.none,
       ),
@@ -236,3 +236,4 @@ abstract final class AppTheme {
     );
   }
 }
+

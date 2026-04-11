@@ -3,11 +3,10 @@ class NearbyUser {
     required this.userId,
     required this.name,
     required this.username,
-    this.avatar,
-    required this.sports,
-    required this.level,
-    required this.distanceMeters,
+    required this.sports, required this.level, required this.distanceMeters, this.avatar,
     this.isOnline = false,
+    this.lat,
+    this.lng,
   });
 
   final String userId;
@@ -18,6 +17,8 @@ class NearbyUser {
   final String level;
   final double distanceMeters;
   final bool isOnline;
+  final double? lat;
+  final double? lng;
 
   String get distanceLabel {
     if (distanceMeters < 1000) {
@@ -31,11 +32,12 @@ class NearbyGym {
   const NearbyGym({
     required this.id,
     required this.name,
-    this.address,
+    required this.distanceMeters, this.address,
     this.photo,
-    required this.distanceMeters,
     this.rating,
     this.isOpen,
+    this.lat,
+    this.lng,
   });
 
   final String id;
@@ -45,6 +47,8 @@ class NearbyGym {
   final double distanceMeters;
   final double? rating;
   final bool? isOpen;
+  final double? lat;
+  final double? lng;
 
   String get distanceLabel {
     if (distanceMeters < 1000) return '${distanceMeters.toInt()}m';

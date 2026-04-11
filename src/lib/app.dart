@@ -20,7 +20,6 @@ class SportConnectApp extends ConsumerWidget {
       title: 'SportConnect',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
       routerConfig: router,
       debugShowCheckedModeBanner: flavor == AppFlavor.dev,
       localizationsDelegates: const [

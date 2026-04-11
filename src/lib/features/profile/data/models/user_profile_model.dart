@@ -21,17 +21,12 @@ class UserProfileModel {
     required this.id,
     required this.name,
     required this.username,
-    this.email,
+    required this.sports, required this.level, required this.postsCount, required this.followersCount, required this.followingCount, required this.badges, this.email,
     this.avatar,
     this.bio,
-    required this.sports,
-    required this.level,
-    required this.postsCount,
-    required this.followersCount,
-    required this.followingCount,
-    required this.badges,
     this.isFollowing = false,
     this.isMe = false,
+    this.isNearby = false,
   });
 
   final String id;
@@ -48,6 +43,8 @@ class UserProfileModel {
   final List<BadgeModel> badges;
   final bool isFollowing;
   final bool isMe;
+  /// True when this user is within the current user's nearby radius.
+  final bool isNearby;
 
   UserProfileModel copyWith({
     String? name,
@@ -58,6 +55,7 @@ class UserProfileModel {
     String? level,
     bool? isFollowing,
     int? followersCount,
+    bool? isNearby,
   }) {
     return UserProfileModel(
       id: id,
@@ -74,6 +72,7 @@ class UserProfileModel {
       badges: badges,
       isFollowing: isFollowing ?? this.isFollowing,
       isMe: isMe,
+      isNearby: isNearby ?? this.isNearby,
     );
   }
 }

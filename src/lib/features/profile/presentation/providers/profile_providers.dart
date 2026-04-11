@@ -61,12 +61,14 @@ class ProfileNotifier
   Future<void> updateProfile({
     String? name,
     String? bio,
+    String? avatar,
     List<String>? sports,
     String? level,
   }) async {
     final updated = await ref.read(profileRepositoryProvider).updateProfile(
           name: name,
           bio: bio,
+          avatar: avatar,
           sports: sports,
           level: level,
         );

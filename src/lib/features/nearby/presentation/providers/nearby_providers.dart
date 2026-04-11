@@ -72,6 +72,10 @@ final nearbyGymsProvider =
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
+// Mock base location: Av. Paulista, São Paulo (-23.5613, -46.6563)
+const _baseLat = -23.5613;
+const _baseLng = -46.6563;
+
 const _mockUsers = [
   NearbyUser(
     userId: 'u1',
@@ -81,6 +85,8 @@ const _mockUsers = [
     level: 'advanced',
     distanceMeters: 320,
     isOnline: true,
+    lat: _baseLat + 0.0029,
+    lng: _baseLng + 0.0013,
   ),
   NearbyUser(
     userId: 'u2',
@@ -90,6 +96,8 @@ const _mockUsers = [
     level: 'advanced',
     distanceMeters: 680,
     isOnline: true,
+    lat: _baseLat - 0.0043,
+    lng: _baseLng - 0.0054,
   ),
   NearbyUser(
     userId: 'u3',
@@ -98,7 +106,8 @@ const _mockUsers = [
     sports: ['Corrida', 'Ciclismo'],
     level: 'intermediate',
     distanceMeters: 950,
-    isOnline: false,
+    lat: _baseLat + 0.0086,
+    lng: _baseLng - 0.0020,
   ),
   NearbyUser(
     userId: 'u4',
@@ -107,7 +116,8 @@ const _mockUsers = [
     sports: ['Corrida'],
     level: 'intermediate',
     distanceMeters: 1400,
-    isOnline: false,
+    lat: _baseLat - 0.0089,
+    lng: _baseLng + 0.0113,
   ),
   NearbyUser(
     userId: 'u5',
@@ -117,6 +127,8 @@ const _mockUsers = [
     level: 'beginner',
     distanceMeters: 2100,
     isOnline: true,
+    lat: _baseLat + 0.0045,
+    lng: _baseLng - 0.0239,
   ),
 ];
 
@@ -128,6 +140,8 @@ const _mockGyms = [
     distanceMeters: 450,
     rating: 4.2,
     isOpen: true,
+    lat: _baseLat - 0.0020,
+    lng: _baseLng + 0.0036,
   ),
   NearbyGym(
     id: 'g2',
@@ -136,6 +150,8 @@ const _mockGyms = [
     distanceMeters: 870,
     rating: 4.8,
     isOpen: true,
+    lat: _baseLat + 0.0050,
+    lng: _baseLng + 0.0070,
   ),
   NearbyGym(
     id: 'g3',
@@ -144,5 +160,7 @@ const _mockGyms = [
     distanceMeters: 1200,
     rating: 4.0,
     isOpen: false,
+    lat: _baseLat - 0.0075,
+    lng: _baseLng - 0.0080,
   ),
 ];

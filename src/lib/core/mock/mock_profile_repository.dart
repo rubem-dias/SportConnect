@@ -31,7 +31,7 @@ class MockProfileRepository implements ProfileRepository {
       followersCount: 1240,
       followingCount: 89,
       badges: _buildBadges(isMe: false),
-      isFollowing: false,
+      isNearby: true,
     ),
     'u2': UserProfileModel(
       id: 'u2',
@@ -45,6 +45,7 @@ class MockProfileRepository implements ProfileRepository {
       followingCount: 210,
       badges: _buildBadges(isMe: false),
       isFollowing: true,
+      isNearby: true,
     ),
   };
 
@@ -184,7 +185,6 @@ class MockProfileRepository implements ProfileRepository {
           unit: 'kg',
           date: now.subtract(const Duration(days: 14)),
           reps: 1,
-          isShared: false,
           muscleGroup: 'Pernas',
         ),
         history: [],
@@ -201,7 +201,6 @@ class MockProfileRepository implements ProfileRepository {
           value: 22,
           unit: 'min',
           date: now.subtract(const Duration(days: 20)),
-          isShared: false,
           muscleGroup: 'Cardio',
         ),
         history: [],
@@ -274,7 +273,7 @@ class MockProfileRepository implements ProfileRepository {
         title: 'Semana Intensa',
         description: 'Treinou 5 dias seguidos',
         isUnlocked: true,
-        unlockedAt: DateTime(2024, 4, 1),
+        unlockedAt: DateTime(2024, 4),
       ),
       BadgeModel(
         id: 'social_butterfly',
@@ -292,7 +291,7 @@ class MockProfileRepository implements ProfileRepository {
         isUnlocked: true,
         unlockedAt: DateTime(2024, 6, 20),
       ),
-      BadgeModel(
+      const BadgeModel(
         id: 'marathon',
         emoji: '🏃',
         title: 'Maratonista',

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
@@ -21,11 +21,11 @@ class AppBadge extends StatelessWidget {
   final bool isSmall;
 
   Color get _backgroundColor => switch (variant) {
-        AppBadgeVariant.primary => AppColors.primary.withOpacity(0.15),
-        AppBadgeVariant.secondary => AppColors.secondary.withOpacity(0.15),
-        AppBadgeVariant.success => AppColors.success.withOpacity(0.15),
-        AppBadgeVariant.warning => AppColors.warning.withOpacity(0.20),
-        AppBadgeVariant.error => AppColors.error.withOpacity(0.15),
+        AppBadgeVariant.primary => AppColors.primary.withValues(alpha: 0.15),
+        AppBadgeVariant.secondary => AppColors.secondary.withValues(alpha: 0.15),
+        AppBadgeVariant.success => AppColors.success.withValues(alpha: 0.15),
+        AppBadgeVariant.warning => AppColors.warning.withValues(alpha: 0.20),
+        AppBadgeVariant.error => AppColors.error.withValues(alpha: 0.15),
         AppBadgeVariant.neutral => AppColors.borderLight,
       };
 
@@ -69,3 +69,4 @@ class AppBadge extends StatelessWidget {
     );
   }
 }
+

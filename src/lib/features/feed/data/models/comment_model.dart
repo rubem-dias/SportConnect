@@ -25,6 +25,9 @@ class CommentModel {
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     final raw = json['reactions'];
+    final rawUser = json['user'];
+    final userMap =
+        rawUser is Map ? Map<String, dynamic>.from(rawUser) : <String, dynamic>{};
     final reactionsMap = <String, int>{};
     if (raw is Map) {
       for (final e in raw.entries) {
@@ -42,10 +45,9 @@ class CommentModel {
       createdAt:
           DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
               DateTime.now(),
-      userName:
-          json['userName']?.toString() ?? json['user']?['name']?.toString(),
-      userAvatar: json['userAvatar']?.toString() ??
-          json['user']?['avatar']?.toString(),
+        userName: json['userName']?.toString() ?? userMap['name']?.toString(),
+        userAvatar:
+          json['userAvatar']?.toString() ?? userMap['avatar']?.toString(),
       replyToId: json['replyToId']?.toString(),
       replyToUserName: json['replyToUserName']?.toString(),
       reactions: reactionsMap,

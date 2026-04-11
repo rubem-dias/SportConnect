@@ -63,9 +63,13 @@ dependencies:
   # Animations
   confetti: ^0.7.0
 
+  # Media
+  image_picker: ^1.1.2
+
   # Utils
   timeago: ^3.6.1
 
+  latlong2: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -73,23 +73,35 @@ class PRRepositoryImpl implements PRRepository {
 
   ExercisePRSummary? _parseSummary(Map<String, dynamic> json) {
     try {
-      final exerciseId = json['exerciseId']?.toString() ?? json['exercise']?['id']?.toString();
-      final exerciseName = json['exerciseName']?.toString() ?? json['exercise']?['name']?.toString();
-      final muscleGroup = json['muscleGroup']?.toString() ?? json['exercise']?['muscleGroup']?.toString() ?? 'outros';
-      final unit = json['unit']?.toString() ?? json['exercise']?['unit']?.toString() ?? 'kg';
+      final rawExercise = json['exercise'];
+      final exercise = rawExercise is Map
+        ? Map<String, dynamic>.from(rawExercise)
+        : <String, dynamic>{};
+
+      final exerciseId =
+        json['exerciseId']?.toString() ?? exercise['id']?.toString();
+      final exerciseName =
+        json['exerciseName']?.toString() ?? exercise['name']?.toString();
+      final muscleGroup = json['muscleGroup']?.toString() ??
+        exercise['muscleGroup']?.toString() ??
+        'outros';
+      final unit = json['unit']?.toString() ?? exercise['unit']?.toString() ?? 'kg';
 
       if (exerciseId == null || exerciseName == null) return null;
 
       final historyJson = json['history'] as List? ?? json['prs'] as List? ?? [];
       final history = historyJson
           .whereType<Map>()
-          .map((m) => PRModel.fromJson({
-                ...Map<String, dynamic>.from(m),
+          .map((m) {
+            final mapped = Map<String, dynamic>.from(m);
+            return PRModel.fromJson({
+                ...mapped,
                 'exerciseId': exerciseId,
                 'exerciseName': exerciseName,
                 'muscleGroup': muscleGroup,
-                'unit': m['unit'] ?? unit,
-              }))
+                'unit': mapped['unit'] ?? unit,
+              });
+          })
           .toList();
 
       if (history.isEmpty) return null;

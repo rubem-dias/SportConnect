@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -42,7 +42,7 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget avatar = GestureDetector(
+    final Widget avatar = GestureDetector(
       onTap: onTap,
       child: Container(
         width: _diameter,
@@ -96,7 +96,7 @@ class _Placeholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.primary.withOpacity(0.15),
+      color: AppColors.primary.withValues(alpha: 0.15),
       alignment: Alignment.center,
       child: Text(
         initials,
@@ -109,3 +109,4 @@ class _Placeholder extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:confetti/confetti.dart';
+﻿import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -215,7 +215,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                         height: 56,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
+                          color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
@@ -328,7 +328,7 @@ class _AddPrScreenState extends ConsumerState<AddPrScreen> {
                     title: Text(context.l10n.addPrShareToggle),
                     subtitle: Text(context.l10n.addPrShareSubtitle),
                     secondary: const Icon(Icons.share_outlined),
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                 ),
 
@@ -434,9 +434,9 @@ class _PreviousBestBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.info.withOpacity(0.1),
+        color: AppColors.info.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.info.withOpacity(0.3)),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -496,7 +496,7 @@ class _ExercisePickerState extends ConsumerState<_ExercisePicker> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: selected != null
-                ? AppColors.primary.withOpacity(0.5)
+                ? AppColors.primary.withValues(alpha: 0.5)
                 : Colors.transparent,
           ),
         ),
@@ -539,14 +539,14 @@ class _ExercisePickerState extends ConsumerState<_ExercisePicker> {
   }
 
   String _muscleEmoji(String group) => switch (group) {
-        'peito' => '🫁',
-        'costas' => '🔙',
-        'pernas' => '🦵',
-        'ombros' || 'bíceps' || 'tríceps' => '💪',
-        'core' => '🎯',
-        'cardio' => '🏃',
-        'olímpico' => '🏋️',
-        _ => '⚡',
+        'peito' => 'ðŸ«',
+        'costas' => 'ðŸ”™',
+        'pernas' => 'ðŸ¦µ',
+        'ombros' || 'bÃ­ceps' || 'trÃ­ceps' => 'ðŸ’ª',
+        'core' => 'ðŸŽ¯',
+        'cardio' => 'ðŸƒ',
+        'olÃ­mpico' => 'ðŸ‹ï¸',
+        _ => 'âš¡',
       };
 }
 
@@ -647,11 +647,11 @@ class _ExerciseSearchSheetState extends ConsumerState<_ExerciseSearchSheet> {
                     final e = exercises[i];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                         child: Text(_muscleEmoji(e.muscleGroup)),
                       ),
                       title: Text(e.name),
-                      subtitle: Text('${e.muscleGroup} · ${e.unit}'),
+                      subtitle: Text('${e.muscleGroup} Â· ${e.unit}'),
                       trailing: e.isCustom
                           ? const Icon(Icons.person_outline_rounded,
                               size: 14, color: AppColors.primary)
@@ -669,14 +669,14 @@ class _ExerciseSearchSheetState extends ConsumerState<_ExerciseSearchSheet> {
   }
 
   String _muscleEmoji(String group) => switch (group) {
-        'peito' => '🫁',
-        'costas' => '🔙',
-        'pernas' => '🦵',
-        'ombros' || 'bíceps' || 'tríceps' => '💪',
-        'core' => '🎯',
-        'cardio' => '🏃',
-        'olímpico' => '🏋️',
-        _ => '⚡',
+        'peito' => 'ðŸ«',
+        'costas' => 'ðŸ”™',
+        'pernas' => 'ðŸ¦µ',
+        'ombros' || 'bÃ­ceps' || 'trÃ­ceps' => 'ðŸ’ª',
+        'core' => 'ðŸŽ¯',
+        'cardio' => 'ðŸƒ',
+        'olÃ­mpico' => 'ðŸ‹ï¸',
+        _ => 'âš¡',
       };
 
   void _createCustom() {
@@ -708,8 +708,8 @@ class _CreateExerciseDialogState
   String _unit = 'kg';
 
   static const _muscleGroups = [
-    'peito', 'costas', 'pernas', 'ombros', 'bíceps', 'tríceps',
-    'core', 'cardio', 'olímpico', 'outros',
+    'peito', 'costas', 'pernas', 'ombros', 'bÃ­ceps', 'trÃ­ceps',
+    'core', 'cardio', 'olÃ­mpico', 'outros',
   ];
   static const _units = ['kg', 'lb', 'km', 'm', 'min', 'reps'];
 
@@ -735,7 +735,7 @@ class _CreateExerciseDialogState
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
-            value: _muscleGroup,
+            initialValue: _muscleGroup,
             decoration: InputDecoration(labelText: context.l10n.exerciseMuscleLabel),
             items: _muscleGroups
                 .map((g) => DropdownMenuItem(value: g, child: Text(g)))
@@ -744,7 +744,7 @@ class _CreateExerciseDialogState
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
-            value: _unit,
+            initialValue: _unit,
             decoration: InputDecoration(labelText: context.l10n.exerciseUnitLabel),
             items: _units
                 .map((u) => DropdownMenuItem(value: u, child: Text(u)))
@@ -810,8 +810,8 @@ class _CelebrationDialog extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.primary.withOpacity(0.95),
-              AppColors.primaryDark.withOpacity(0.95),
+              AppColors.primary.withValues(alpha: 0.95),
+              AppColors.primaryDark.withValues(alpha: 0.95),
             ],
           ),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -819,7 +819,7 @@ class _CelebrationDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🏆', style: TextStyle(fontSize: 56)),
+            const Text('ðŸ†', style: TextStyle(fontSize: 56)),
             const SizedBox(height: AppSpacing.md),
             Text(
               context.l10n.addPrCelebrationTitle,
@@ -843,7 +843,7 @@ class _CelebrationDialog extends StatelessWidget {
                 vertical: AppSpacing.md,
               ),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
@@ -884,3 +884,4 @@ class _CelebrationDialog extends StatelessWidget {
     );
   }
 }
+

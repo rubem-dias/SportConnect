@@ -57,7 +57,6 @@ class MockChatRepository implements ChatRepository {
       senderName: 'Você',
       content: content,
       type: type,
-      status: MessageStatus.sent,
       replyToMessageId: replyToMessageId,
       createdAt: DateTime.now(),
     );
@@ -132,7 +131,6 @@ class MockChatRepository implements ChatRepository {
       senderId: 'u1',
       senderName: 'Mateus Corrêa',
       content: 'Bora treinar amanhã cedo? 💪',
-      status: MessageStatus.sent,
       createdAt: DateTime.now(),
     );
 
@@ -147,7 +145,6 @@ class MockChatRepository implements ChatRepository {
     return [
       ConversationModel(
         id: 'conv1',
-        type: ConversationType.dm,
         name: 'Mateus Corrêa',
         lastMessage: 'Que treino fez hoje?',
         lastMessageAt: now.subtract(const Duration(minutes: 5)),
@@ -173,12 +170,9 @@ class MockChatRepository implements ChatRepository {
       ),
       ConversationModel(
         id: 'conv3',
-        type: ConversationType.dm,
         name: 'Fernanda Lima',
         lastMessage: 'Valeu pela dica de suplementação!',
         lastMessageAt: now.subtract(const Duration(hours: 3)),
-        unreadCount: 0,
-        isOnline: false,
         members: const [
           ConversationMember(userId: 'u5', name: 'Fernanda Lima'),
         ],
@@ -190,7 +184,6 @@ class MockChatRepository implements ChatRepository {
         lastMessage: 'Nova feature: Stories chegando! 🚀',
         lastMessageAt: now.subtract(const Duration(hours: 6)),
         unreadCount: 1,
-        members: const [],
       ),
       ConversationModel(
         id: 'conv5',
@@ -198,7 +191,6 @@ class MockChatRepository implements ChatRepository {
         name: 'Maratona SP 2025',
         lastMessage: 'Eu: Rota de treino para domingo enviada 🗺️',
         lastMessageAt: now.subtract(const Duration(days: 1)),
-        unreadCount: 0,
         members: const [
           ConversationMember(userId: 'u6', name: 'Ana Paula'),
           ConversationMember(userId: 'u7', name: 'Bruno Alves'),
@@ -245,7 +237,6 @@ class MockChatRepository implements ChatRepository {
           senderId: 'u1',
           senderName: 'Mateus Corrêa',
           content: 'Que treino fez hoje?',
-          status: MessageStatus.sent,
           createdAt: now.subtract(const Duration(minutes: 5)),
         ),
       ],
@@ -278,7 +269,6 @@ class MockChatRepository implements ChatRepository {
           prExercise: 'Clean',
           prValue: '110',
           prUnit: 'kg',
-          status: MessageStatus.sent,
           reactions: const {'🔥': 4, '🏆': 2},
           createdAt: now.subtract(const Duration(hours: 1)),
         ),

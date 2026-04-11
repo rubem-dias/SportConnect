@@ -379,49 +379,80 @@ class _OtherUserActions extends ConsumerWidget {
     final current =
         ref.watch(profileProvider(profileId)).valueOrNull ?? profile;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: current.isFollowing
-              ? OutlinedButton(
-                  onPressed: () =>
-                      ref.read(profileProvider(profileId).notifier).unfollow(),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Seguindo'),
-                )
-              : ElevatedButton(
-                  onPressed: () =>
-                      ref.read(profileProvider(profileId).notifier).follow(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Seguir'),
-                ),
+        Row(
+          children: [
+            Expanded(
+              child: current.isFollowing
+                  ? OutlinedButton(
+                      onPressed: () => ref
+                          .read(profileProvider(profileId).notifier)
+                          .unfollow(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Seguindo'),
+                    )
+                  : ElevatedButton(
+                      onPressed: () =>
+                          ref.read(profileProvider(profileId).notifier).follow(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Seguir'),
+                    ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  context.push(AppRoutes.chatConversationPath(profileId)),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+              label: const Text('Mensagem'),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.sm),
-        OutlinedButton.icon(
-          onPressed: () =>
-              context.push(AppRoutes.chatConversationPath(profileId)),
-          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-          label: const Text('Mensagem'),
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.primary),
-            foregroundColor: AppColors.primary,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        if (current.isNearby) ...[
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: () => _showTrainTogetherConfirm(context),
+            icon: const Icon(Icons.fitness_center_rounded, size: 16),
+            label: const Text('Treinar junto'),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.secondary),
+              foregroundColor: AppColors.secondary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
           ),
-        ),
+        ],
       ],
+    );
+  }
+
+  void _showTrainTogetherConfirm(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Solicitação enviada para ${profile.name}!'),
+        backgroundColor: AppColors.secondary,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 }
@@ -616,20 +647,20 @@ class _PRsTab extends ConsumerWidget {
     return prsAsync.when(
       loading: () => ListView.builder(
         itemCount: 5,
-        itemBuilder: (_, __) => Padding(
-          padding: const EdgeInsets.symmetric(
+        itemBuilder: (_, __) => const Padding(
+          padding: EdgeInsets.symmetric(
               horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
           child: Row(
             children: [
-              const AppLoadingSkeleton(
+              AppLoadingSkeleton(
                   width: 44, height: 44, borderRadius: 22),
-              const SizedBox(width: AppSpacing.md),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppLoadingSkeleton(height: 14, borderRadius: 4),
-                    const SizedBox(height: 6),
+                    AppLoadingSkeleton(height: 14, borderRadius: 4),
+                    SizedBox(height: 6),
                     AppLoadingSkeleton(
                         width: 100, height: 12, borderRadius: 4),
                   ],
@@ -884,11 +915,11 @@ class _ProfileSkeleton extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: List.generate(
                         3,
-                        (_) => Column(
+                        (_) => const Column(
                           children: [
-                            const AppLoadingSkeleton(
+                            AppLoadingSkeleton(
                                 width: 36, height: 18, borderRadius: 4),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             AppLoadingSkeleton(
                                 width: 48, height: 12, borderRadius: 4),
                           ],
@@ -900,7 +931,7 @@ class _ProfileSkeleton extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               const AppLoadingSkeleton(
-                  width: 160, height: 16, borderRadius: 4),
+                  width: 160, borderRadius: 4),
               const SizedBox(height: 6),
               const AppLoadingSkeleton(
                   width: 100, height: 12, borderRadius: 4),

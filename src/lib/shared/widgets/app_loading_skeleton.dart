@@ -13,8 +13,7 @@ class AppLoadingSkeleton extends StatefulWidget {
   });
 
   const AppLoadingSkeleton.circle({
-    super.key,
-    required double size,
+    required double size, super.key,
   })  : width = size,
         height = size,
         borderRadius = null,
@@ -84,32 +83,32 @@ class PostCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const AppLoadingSkeleton.circle(size: 40),
-              const SizedBox(width: 12),
+              AppLoadingSkeleton.circle(size: 40),
+              SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppLoadingSkeleton(width: 120, height: 14, borderRadius: 4),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   AppLoadingSkeleton(width: 80, height: 12, borderRadius: 4),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           AppLoadingSkeleton(width: double.infinity, height: 14, borderRadius: 4),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           AppLoadingSkeleton(width: double.infinity, height: 14, borderRadius: 4),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           AppLoadingSkeleton(width: 200, height: 14, borderRadius: 4),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           AppLoadingSkeleton(
             width: double.infinity,
             height: 200,

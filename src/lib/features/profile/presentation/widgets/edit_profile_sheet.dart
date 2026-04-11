@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -26,9 +29,7 @@ void showEditProfileSheet(
 
 class EditProfileSheet extends ConsumerStatefulWidget {
   const EditProfileSheet({
-    super.key,
-    required this.profile,
-    required this.profileId,
+    required this.profile, required this.profileId, super.key,
   });
 
   final UserProfileModel profile;
@@ -42,6 +43,7 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _bioCtrl;
   bool _isSaving = false;
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -57,15 +59,66 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    Navigator.pop(context); // fecha o bottom sheet de opções
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: source,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 85,
+    );
+    if (picked != null && mounted) {
+      setState(() => _pickedImage = File(picked.path));
+    }
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded),
+              title: const Text('Câmera'),
+              onTap: () => _pickImage(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('Galeria'),
+              onTap: () => _pickImage(ImageSource.gallery),
+            ),
+            if (widget.profile.avatar != null || _pickedImage != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.error),
+                title: const Text('Remover foto',
+                    style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  setState(() => _pickedImage = null);
+                  Navigator.pop(context);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
 
     setState(() => _isSaving = true);
     try {
+      // In a real app, _pickedImage would be uploaded to storage and the URL passed here.
+      // For mock purposes, we pass the local path as the avatar value.
       await ref.read(profileProvider(widget.profileId).notifier).updateProfile(
             name: name,
             bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
+            avatar: _pickedImage?.path,
           );
       if (mounted) Navigator.pop(context);
     } finally {
@@ -114,39 +167,45 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
                         ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  // Avatar placeholder
+                  // Avatar com troca de foto
                   Center(
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundColor: AppColors.primary.withAlpha(40),
-                          backgroundImage: widget.profile.avatar != null
-                              ? NetworkImage(widget.profile.avatar!)
-                              : null,
-                          child: widget.profile.avatar == null
-                              ? const Icon(Icons.person_rounded,
-                                  size: 40, color: AppColors.primary)
-                              : null,
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              size: 16,
-                              color: Colors.white,
+                    child: GestureDetector(
+                      onTap: _showImageSourceSheet,
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor: AppColors.primary.withAlpha(40),
+                            backgroundImage: _pickedImage != null
+                                ? FileImage(_pickedImage!) as ImageProvider
+                                : (widget.profile.avatar != null
+                                    ? NetworkImage(widget.profile.avatar!)
+                                    : null),
+                            child: (_pickedImage == null &&
+                                    widget.profile.avatar == null)
+                                ? const Icon(Icons.person_rounded,
+                                    size: 40, color: AppColors.primary)
+                                : null,
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                size: 16,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),

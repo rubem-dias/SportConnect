@@ -62,7 +62,7 @@ class ChatWebSocketService {
   final _pendingQueue = <WsEvent>[];
   Timer? _reconnectTimer;
   // ignore: unused_field
-  int _reconnectAttempts = 0;
+  final int _reconnectAttempts = 0;
 
   // ignore: unused_field
   dynamic _socket; // reservado para o canal ws real

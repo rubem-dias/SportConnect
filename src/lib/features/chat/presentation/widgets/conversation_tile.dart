@@ -7,9 +7,7 @@ import '../../data/models/conversation_model.dart';
 
 class ConversationTile extends StatelessWidget {
   const ConversationTile({
-    super.key,
-    required this.conversation,
-    required this.onTap,
+    required this.conversation, required this.onTap, super.key,
     this.onLongPress,
   });
 

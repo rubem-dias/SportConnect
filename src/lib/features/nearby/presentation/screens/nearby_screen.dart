@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -21,6 +23,7 @@ class NearbyScreen extends ConsumerStatefulWidget {
 class _NearbyScreenState extends ConsumerState<NearbyScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _showMap = false;
 
   @override
   void initState() {
@@ -119,6 +122,16 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
             onPressed: () => _showPrivacySheet(context),
           ),
           IconButton(
+            icon: Icon(
+              _showMap ? Icons.list_rounded : Icons.map_rounded,
+            ),
+            tooltip: _showMap ? 'Ver lista' : 'Ver mapa',
+            onPressed: () => setState(() => _showMap = !_showMap),
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+          IconButton(
             icon: const Icon(Icons.tune_rounded),
             onPressed: () => _showFiltersSheet(context),
             color: isDark
@@ -142,15 +155,16 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
         ),
       ),
       body: permission == LocationPermissionStatus.denied
-          ? _PermissionDeniedState(
-              onRetry: _requestLocationPermission)
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _UsersTab(isDark: isDark),
-                _GymsTab(isDark: isDark),
-              ],
-            ),
+          ? _PermissionDeniedState(onRetry: _requestLocationPermission)
+          : _showMap
+              ? _NearbyMapView(isDark: isDark)
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _UsersTab(isDark: isDark),
+                    _GymsTab(isDark: isDark),
+                  ],
+                ),
     );
   }
 
@@ -642,6 +656,274 @@ class _GymTile extends StatelessWidget {
   }
 }
 
+// ── Map View ──────────────────────────────────────────────────────────────────
+
+class _NearbyMapView extends ConsumerWidget {
+  const _NearbyMapView({required this.isDark});
+
+  final bool isDark;
+
+  // Mock current user location (Av. Paulista)
+  static const _myLat = -23.5613;
+  static const _myLng = -46.6563;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final usersAsync = ref.watch(nearbyUsersProvider);
+    final gymsAsync = ref.watch(nearbyGymsProvider);
+
+    final users = usersAsync.valueOrNull ?? [];
+    final gyms = gymsAsync.valueOrNull ?? [];
+
+    final userMarkers = users
+        .where((u) => u.lat != null && u.lng != null)
+        .map(
+          (u) => Marker(
+            point: LatLng(u.lat!, u.lng!),
+            width: 44,
+            height: 44,
+            child: GestureDetector(
+              onTap: () => _showUserSheet(context, u),
+              child: _UserPin(user: u),
+            ),
+          ),
+        )
+        .toList();
+
+    final gymMarkers = gyms
+        .where((g) => g.lat != null && g.lng != null)
+        .map(
+          (g) => Marker(
+            point: LatLng(g.lat!, g.lng!),
+            width: 44,
+            height: 44,
+            child: GestureDetector(
+              onTap: () => _showGymSheet(context, g),
+              child: _GymPin(gym: g),
+            ),
+          ),
+        )
+        .toList();
+
+    return FlutterMap(
+      options: const MapOptions(
+        initialCenter: LatLng(_myLat, _myLng),
+        initialZoom: 14.5,
+        maxZoom: 18,
+        minZoom: 10,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.sportconnect.app',
+        ),
+        // My location marker
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: const LatLng(_myLat, _myLng),
+              width: 56,
+              height: 56,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.person_rounded,
+                    color: Colors.white, size: 24),
+              ),
+            ),
+          ],
+        ),
+        MarkerLayer(markers: userMarkers),
+        MarkerLayer(markers: gymMarkers),
+      ],
+    );
+  }
+
+  void _showUserSheet(BuildContext context, NearbyUser user) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => _UserBottomSheet(user: user),
+    );
+  }
+
+  void _showGymSheet(BuildContext context, NearbyGym gym) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => _GymBottomSheet(gym: gym),
+    );
+  }
+}
+
+class _UserPin extends StatelessWidget {
+  const _UserPin({required this.user});
+
+  final NearbyUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: const [
+              BoxShadow(
+                  color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
+            ],
+          ),
+          child: ClipOval(
+            child: user.avatar != null
+                ? Image.network(user.avatar!, fit: BoxFit.cover)
+                : const Icon(Icons.person_rounded,
+                    color: Colors.white, size: 20),
+          ),
+        ),
+        if (user.isOnline)
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: AppColors.online,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _GymPin extends StatelessWidget {
+  const _GymPin({required this.gym});
+
+  final NearbyGym gym;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: gym.isOpen == true ? AppColors.success : AppColors.error,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [
+          BoxShadow(
+              color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
+        ],
+      ),
+      child: const Icon(Icons.fitness_center_rounded,
+          color: Colors.white, size: 20),
+    );
+  }
+}
+
+class _GymBottomSheet extends StatelessWidget {
+  const _GymBottomSheet({required this.gym});
+
+  final NearbyGym gym;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppColors.secondary.withAlpha(30),
+                  child: const Icon(Icons.fitness_center_rounded,
+                      color: AppColors.secondary, size: 28),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(gym.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 16)),
+                      if (gym.address != null)
+                        Text(gym.address!,
+                            style: const TextStyle(
+                                color: AppColors.textSecondaryLight,
+                                fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                if (gym.rating != null) ...[
+                  const Icon(Icons.star_rounded,
+                      size: 16, color: AppColors.warning),
+                  const SizedBox(width: 4),
+                  Text(gym.rating!.toStringAsFixed(1),
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(width: AppSpacing.md),
+                ],
+                const Icon(Icons.near_me_rounded,
+                    size: 16, color: AppColors.primary),
+                const SizedBox(width: 4),
+                Text(gym.distanceLabel,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary)),
+                const SizedBox(width: AppSpacing.md),
+                if (gym.isOpen != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color:
+                          (gym.isOpen! ? AppColors.success : AppColors.error)
+                              .withAlpha(30),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      gym.isOpen! ? 'Aberto' : 'Fechado',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: gym.isOpen!
+                              ? AppColors.success
+                              : AppColors.error),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 class _PermissionDeniedState extends StatelessWidget {
@@ -728,27 +1010,27 @@ class _NearbyListSkeleton extends StatelessWidget {
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 6,
-      itemBuilder: (_, __) => Padding(
-        padding: const EdgeInsets.symmetric(
+      itemBuilder: (_, __) => const Padding(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         child: Row(
           children: [
-            const AppLoadingSkeleton(width: 48, height: 48, borderRadius: 24),
-            const SizedBox(width: AppSpacing.md),
+            AppLoadingSkeleton(width: 48, height: 48, borderRadius: 24),
+            SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const AppLoadingSkeleton(height: 14, borderRadius: 4),
-                  const SizedBox(height: 6),
+                  AppLoadingSkeleton(height: 14, borderRadius: 4),
+                  SizedBox(height: 6),
                   AppLoadingSkeleton(
                       width: 120, height: 12, borderRadius: 4),
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            SizedBox(width: AppSpacing.md),
             AppLoadingSkeleton(width: 44, height: 14, borderRadius: 4),
           ],
         ),

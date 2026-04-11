@@ -27,6 +27,9 @@ class PostModel {
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
     final rawReactions = json['reactions'];
+    final rawUser = json['user'];
+    final userMap =
+        rawUser is Map ? Map<String, dynamic>.from(rawUser) : <String, dynamic>{};
     final reactionsMap = <String, int>{};
     if (rawReactions is Map) {
       for (final entry in rawReactions.entries) {
@@ -54,9 +57,9 @@ class PostModel {
       commentsCount: (json['commentsCount'] as num?)?.toInt() ?? 0,
       createdAt:
           DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      userName: json['userName']?.toString() ?? json['user']?['name']?.toString(),
+        userName: json['userName']?.toString() ?? userMap['name']?.toString(),
       userAvatar:
-          json['userAvatar']?.toString() ?? json['user']?['avatar']?.toString(),
+          json['userAvatar']?.toString() ?? userMap['avatar']?.toString(),
     );
   }
 

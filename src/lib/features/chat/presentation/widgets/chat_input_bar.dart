@@ -6,9 +6,7 @@ import '../../data/models/chat_message_model.dart';
 
 class ChatInputBar extends StatefulWidget {
   const ChatInputBar({
-    super.key,
-    required this.onSend,
-    required this.onTypingChanged,
+    required this.onSend, required this.onTypingChanged, super.key,
     this.replyTo,
     this.onCancelReply,
   });
@@ -95,7 +93,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               children: [
                 // Botão de mídia
                 IconButton(
-                  onPressed: () {}, // TODO: abrir picker
+                  onPressed: () {}, // TODO(rubem): abrir picker de arquivos.
                   icon: const Icon(Icons.attach_file_rounded),
                   color: isDark
                       ? AppColors.textSecondaryDark

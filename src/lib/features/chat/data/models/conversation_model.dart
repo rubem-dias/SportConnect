@@ -3,11 +3,8 @@ enum ConversationType { dm, group, channel }
 class ConversationModel {
   const ConversationModel({
     required this.id,
-    this.type = ConversationType.dm,
-    required this.name,
+    required this.name, required this.lastMessage, required this.lastMessageAt, this.type = ConversationType.dm,
     this.avatar,
-    required this.lastMessage,
-    required this.lastMessageAt,
     this.unreadCount = 0,
     this.isMuted = false,
     this.isArchived = false,

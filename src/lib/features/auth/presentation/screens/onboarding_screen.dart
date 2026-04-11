@@ -159,7 +159,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               (key) => RadioListTile<String>(
                 title: Text(_levelLabel(key, l10n)),
                 value: key,
+                // ignore: deprecated_member_use
                 groupValue: _selectedLevelKey,
+                // ignore: deprecated_member_use
                 onChanged: (value) => setState(() => _selectedLevelKey = value),
               ),
             ),
@@ -181,7 +183,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               (key) => RadioListTile<String>(
                 title: Text(_goalLabel(key, l10n)),
                 value: key,
+                // ignore: deprecated_member_use
                 groupValue: _selectedGoalKey,
+                // ignore: deprecated_member_use
                 onChanged: (value) =>
                     setState(() => _selectedGoalKey = value),
               ),

@@ -7,10 +7,9 @@ class MockAuthRepository implements AuthRepository {
     id: 'dev-user-1',
     email: 'dev@sportconnect.app',
     name: 'Dev User',
-    avatar: null,
     sports: ['Musculação', 'Corrida'],
     level: 'intermediate',
-    createdAt: DateTime(2024, 1, 1),
+    createdAt: DateTime(2024),
   );
 
   static final _mockTokens = AuthTokenModel(

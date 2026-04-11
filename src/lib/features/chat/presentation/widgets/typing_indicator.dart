@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 class TypingIndicator extends StatefulWidget {
-  const TypingIndicator({super.key, required this.userNames});
+  const TypingIndicator({required this.userNames, super.key});
 
   final List<String> userNames;
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
 
 abstract final class AppTypography {
   static const _inter = 'Inter';

@@ -38,6 +38,10 @@ clean:
 
 ## Roda o analisador
 lint:
+	flutter analyze --no-fatal-infos --no-fatal-warnings
+
+## Roda o analisador em modo estrito (falha em infos e warnings)
+lint-strict:
 	flutter analyze
 
 ## Roda os testes

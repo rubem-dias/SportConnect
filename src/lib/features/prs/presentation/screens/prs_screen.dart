@@ -65,12 +65,11 @@ class _PrsScreenState extends ConsumerState<PrsScreen> {
           onRefresh: () => ref.read(prsProvider.notifier).refresh(),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.addPr),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Novo PR'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

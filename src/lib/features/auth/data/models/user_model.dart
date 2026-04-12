@@ -9,7 +9,9 @@ class UserModel with _$UserModel {
     required String id,
     required String email,
     required String name,
-    required DateTime createdAt, String? avatar,
+    required DateTime createdAt,
+    String? username,
+    String? avatar,
     @Default([]) List<String> sports,
     @Default('beginner') String level,
   }) = _UserModel;

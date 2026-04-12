@@ -15,7 +15,7 @@ class SplashScreen extends ConsumerWidget {
     authState.whenData((user) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (user != null) {
-          context.go(AppRoutes.feed);
+          context.go(AppRoutes.chat);
         } else {
           context.go(AppRoutes.login);
         }

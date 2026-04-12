@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_button.dart';
 
@@ -20,6 +22,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const _storage = FlutterSecureStorage();
   static const _kOnboardingPreferencesKey = 'onboarding_preferences';
   static const _kOnboardingCompletedKey = 'onboarding_completed';
+
+  static const _totalSteps = 5;
+
+  // Step 0 — username
+  final _usernameController = TextEditingController();
+  String? _usernameError;
+  _UsernameStatus _usernameStatus = _UsernameStatus.idle;
 
   // Internal keys — display labels são resolvidos via l10n em build()
   static const _sportKeys = <String>[
@@ -42,7 +51,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _locationOptIn = false;
   bool _isSaving = false;
 
-  // Resolve chave interna → label traduzido
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    super.dispose();
+  }
+
+  // ─── Username validation ──────────────────────────────────────────────────
+
+  static final _usernameRegex = RegExp(r'^[a-z0-9_]{3,20}$');
+
+  void _onUsernameChanged(String value) {
+    setState(() {
+      _usernameError = null;
+      _usernameStatus =
+          value.isEmpty ? _UsernameStatus.idle : _UsernameStatus.checking;
+    });
+
+    if (value.isEmpty) return;
+
+    // Simula verificação de disponibilidade com debounce
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      if (_usernameController.text != value) return;
+
+      if (!_usernameRegex.hasMatch(value)) {
+        setState(() {
+          _usernameError = 'Use apenas letras minúsculas, números e _';
+          _usernameStatus = _UsernameStatus.unavailable;
+        });
+        return;
+      }
+
+      // Mock: usernames reservados
+      const reserved = {'admin', 'sport', 'sportconnect'};
+      if (reserved.contains(value)) {
+        setState(() {
+          _usernameError = '@$value já está em uso';
+          _usernameStatus = _UsernameStatus.unavailable;
+        });
+        return;
+      }
+
+      setState(() => _usernameStatus = _UsernameStatus.available);
+    });
+  }
+
+  bool get _canProceedFromUsername =>
+      _usernameStatus == _UsernameStatus.available &&
+      _usernameController.text.isNotEmpty;
+
+  // ─── l10n helpers ─────────────────────────────────────────────────────────
+
   String _sportLabel(String key, AppLocalizations l10n) => switch (key) {
         'musculacao' => l10n.sportMusculacao,
         'corrida'    => l10n.sportCorrida,
@@ -70,8 +130,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _             => key,
       };
 
+  // ─── Navigation ───────────────────────────────────────────────────────────
+
   Future<void> _nextStep() async {
-    if (_currentStep < 3) {
+    if (_currentStep == 0 && !_canProceedFromUsername) return;
+    if (_currentStep < _totalSteps - 1) {
       setState(() => _currentStep++);
       return;
     }
@@ -79,7 +142,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _skipStep() async {
-    if (_currentStep < 3) {
+    if (_currentStep == 0) return; // username é obrigatório
+    if (_currentStep < _totalSteps - 1) {
       setState(() => _currentStep++);
       return;
     }
@@ -89,6 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _finish() async {
     setState(() => _isSaving = true);
     final payload = <String, dynamic>{
+      'username': _usernameController.text.trim(),
       'sports': _selectedSportKeys.toList(),
       'level': _selectedLevelKey,
       'objective': _selectedGoalKey,
@@ -105,12 +170,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ]);
 
     if (!mounted) return;
-    context.go(AppRoutes.feed);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.go(AppRoutes.chat);
+    });
   }
+
+  // ─── Step content ─────────────────────────────────────────────────────────
 
   Widget _buildStepContent(AppLocalizations l10n) {
     switch (_currentStep) {
       case 0:
+        return _UsernameStep(
+          controller: _usernameController,
+          status: _usernameStatus,
+          error: _usernameError,
+          onChanged: _onUsernameChanged,
+        );
+
+      case 1:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -144,7 +221,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ],
         );
 
-      case 1:
+      case 2:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -162,13 +239,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // ignore: deprecated_member_use
                 groupValue: _selectedLevelKey,
                 // ignore: deprecated_member_use
-                onChanged: (value) => setState(() => _selectedLevelKey = value),
+                onChanged: (value) =>
+                    setState(() => _selectedLevelKey = value),
               ),
             ),
           ],
         );
 
-      case 2:
+      case 3:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -202,7 +280,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text('${l10n.onboardingLocationSubtitle} ${l10n.onboardingLocationNote}'),
+            Text(
+              '${l10n.onboardingLocationSubtitle} ${l10n.onboardingLocationNote}',
+            ),
             const SizedBox(height: AppSpacing.lg),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -215,9 +295,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  // ─── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isLastStep = _currentStep == _totalSteps - 1;
+    final isUsernameStep = _currentStep == 0;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.onboardingTitle)),
@@ -227,9 +311,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.registerStep(_currentStep + 1, 4)),
+              Text(l10n.registerStep(_currentStep + 1, _totalSteps)),
               const SizedBox(height: AppSpacing.sm),
-              LinearProgressIndicator(value: (_currentStep + 1) / 4),
+              LinearProgressIndicator(
+                value: (_currentStep + 1) / _totalSteps,
+              ),
               const SizedBox(height: AppSpacing.xl),
               Expanded(
                 child: SingleChildScrollView(
@@ -239,23 +325,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
-                  Expanded(
-                    child: AppButton(
-                      label: _currentStep == 3
-                          ? l10n.onboardingFinishLater
-                          : l10n.onboardingSkip,
-                      variant: AppButtonVariant.secondary,
-                      onPressed: _isSaving ? null : _skipStep,
+                  if (!isUsernameStep) ...[
+                    Expanded(
+                      child: AppButton(
+                        label: isLastStep
+                            ? l10n.onboardingFinishLater
+                            : l10n.onboardingSkip,
+                        variant: AppButtonVariant.secondary,
+                        onPressed: _isSaving ? null : _skipStep,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
                   Expanded(
                     child: AppButton(
-                      label: _currentStep == 3
+                      label: isLastStep
                           ? l10n.onboardingComplete
                           : l10n.onboardingContinue,
                       isLoading: _isSaving,
-                      onPressed: _isSaving ? null : _nextStep,
+                      onPressed: _isSaving
+                          ? null
+                          : (isUsernameStep && !_canProceedFromUsername
+                              ? null
+                              : _nextStep),
                     ),
                   ),
                 ],
@@ -265,5 +357,149 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
+  }
+}
+
+// ─── Username step ──────────────────────────────────────────────────────────
+
+enum _UsernameStatus { idle, checking, available, unavailable }
+
+class _UsernameStep extends StatelessWidget {
+  const _UsernameStep({
+    required this.controller,
+    required this.status,
+    required this.error,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final _UsernameStatus status;
+  final String? error;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Escolha seu @username',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Seu username é como as pessoas te encontram no SportConnect. Você pode mudá-lo depois.',
+          style: TextStyle(
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          autofocus: true,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9_]')),
+            LengthLimitingTextInputFormatter(20),
+          ],
+          keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.done,
+          style: const TextStyle(fontSize: 18),
+          decoration: InputDecoration(
+            prefixText: '@',
+            prefixStyle: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+            hintText: 'seuusername',
+            errorText: error,
+            suffixIcon: _StatusIcon(status: status),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.error),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.error, width: 2),
+            ),
+          ),
+        ),
+        if (status == _UsernameStatus.available) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.success,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '@${controller.text} está disponível!',
+                style: const TextStyle(
+                  color: AppColors.success,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: AppSpacing.xl),
+        Text(
+          '• Entre 3 e 20 caracteres\n'
+          '• Apenas letras minúsculas, números e _\n'
+          '• Sem espaços ou caracteres especiais',
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.7,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusIcon extends StatelessWidget {
+  const _StatusIcon({required this.status});
+
+  final _UsernameStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (status) {
+      _UsernameStatus.checking => const Padding(
+          padding: EdgeInsets.all(12),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      _UsernameStatus.available => const Icon(
+          Icons.check_circle_rounded,
+          color: AppColors.success,
+        ),
+      _UsernameStatus.unavailable => const Icon(
+          Icons.cancel_rounded,
+          color: AppColors.error,
+        ),
+      _UsernameStatus.idle => const SizedBox.shrink(),
+    };
   }
 }

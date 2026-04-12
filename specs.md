@@ -10,7 +10,19 @@
 
 SportConnect é uma plataforma mobile de comunidade esportiva com foco em experiência de treino compartilhada. A proposta é ser socialmente fluida como o Telegram — rápido, limpo, orientado a conversas e grupos — mas com camadas de gamificação e tracking voltadas para esporte.
 
-O usuário vem para registrar seu PR, compartilhar um treino, encontrar alguém que treina perto dele ou entrar num grupo de corrida. Fica pela comunidade.
+O usuário vem para conversar com sua turma de treino, encontrar alguém que treina perto dele ou descobrir eventos esportivos. Fica pela comunidade.
+
+### Navegação principal (bottom nav)
+
+| # | Aba | Descrição | Status |
+|---|---|---|---|
+| 1 | **Chat** | Tela inicial — DMs e grupos (estilo Telegram) | ✅ Core |
+| 2 | **Nearby** | Usuários próximos por localização | ✅ Core |
+| 3 | **Eventos** | Eventos esportivos (estilo Strava/Meetup) | 🔜 Futuro |
+| 4 | **Explorar** | Hub de features adicionais (PRs, Metas, etc.) | ✅ Core |
+| 5 | **Perfil** | Perfil do usuário | ✅ Core |
+
+> Features adicionais crescem dentro de **Explorar** sem poluir a navegação principal.
 
 ---
 
@@ -41,11 +53,13 @@ lib/
 │   └── utils/            # Formatadores, helpers
 ├── features/
 │   ├── auth/             # Login, registro, onboarding
-│   ├── feed/             # Home feed, posts, stories
-│   ├── prs/              # Personal Records
-│   ├── goals/            # Metas e progresso
-│   ├── chat/             # DMs e grupos (estilo Telegram)
-│   ├── nearby/           # Usuários e academias próximas
+│   ├── chat/             # DMs e grupos (estilo Telegram) — tela inicial
+│   ├── nearby/           # Usuários próximos
+│   ├── eventos/          # Eventos esportivos (futuro — Strava/Meetup-like)
+│   ├── explorar/         # Hub de features adicionais
+│   ├── prs/              # Personal Records (acessível via Explorar)
+│   ├── goals/            # Metas e progresso (acessível via Explorar)
+│   ├── feed/             # Feed de posts — pausado, fora do MVP atual
 │   ├── profile/          # Perfil, stats, conquistas
 │   ├── search/           # Busca global
 │   └── notifications/    # Central de notificações
@@ -69,14 +83,17 @@ Sem BLoC; Riverpod com `AsyncNotifier` e `StateNotifier`.
 - Onboarding: esportes de interesse, objetivo, nível
 - Recuperação de senha
 
-### 4.2 Feed / Home
-Inspirado no Telegram (lista limpa, sem poluição visual):
+### 4.2 Feed / Home ⚠️ Pausado — fora do MVP atual
+O feed existe no código mas está desativado da navegação principal. Será retomado numa fase futura.
+
+Escopo planejado (quando retomar):
 - **Posts de treino:** descrição, exercícios, fotos/vídeos curtos
 - **PR compartilhado:** card destacado com exercício + peso + badge
-- **Stories de treino:** conteúdo efêmero (24h)
 - Reactions rápidas (🔥 💪 🏆)
 - Comentários
 - Algoritmo: posts de seguidos + comunidades + localização (configurável)
+
+> **Stories removidos** — decisão de não seguir o modelo Instagram.
 
 ### 4.3 Personal Records (PRs)
 - Registro por exercício: peso × reps × data
@@ -115,12 +132,27 @@ Interface Telegram-like:
 - Mural de conquistas (badges)
 - Cronologia de atividade física
 
-### 4.8 Busca e Descoberta
+### 4.8 Eventos 🔜 Futuro
+Inspirado no Strava e Meetup:
+- Criação e divulgação de eventos esportivos (corridas, peladas, treinos em grupo)
+- Localização, data, vagas e tipo de esporte
+- Inscrição e confirmação de presença
+- Integração com Nearby (eventos próximos)
+
+> Tela já existente no app como placeholder. Feature completa planejada para pós-MVP.
+
+### 4.9 Explorar — Hub de Features Adicionais
+Aba dedicada a features complementares ao core, permitindo crescimento sem poluir o bottom nav:
+- **PRs** (Personal Records)
+- **Metas**
+- Features futuras entram aqui antes de ganhar destaque próprio
+
+### 4.10 Busca e Descoberta
 - Busca global: usuários, grupos, exercícios, academias
 - Explorar: trending por esporte, região
 - Hashtags em posts
 
-### 4.9 Notificações
+### 4.11 Notificações
 - Push (FCM)
 - In-app notification center
 - Configuração granular por tipo

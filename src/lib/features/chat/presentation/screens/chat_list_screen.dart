@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_loading_skeleton.dart';
+import '../../../search/data/models/search_result_model.dart';
+import '../../../search/presentation/providers/search_providers.dart';
 import '../providers/chat_providers.dart';
 import '../widgets/conversation_tile.dart';
 import '../widgets/create_group_sheet.dart';
@@ -73,7 +76,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                 focusNode: _focusNode,
                 onChanged: (v) => setState(() => _query = v),
                 decoration: InputDecoration(
-                  hintText: 'Buscar conversas...',
+                  hintText: 'Buscar por @username ou nome...',
                   hintStyle: TextStyle(
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -162,77 +165,76 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                 .toList();
           }
 
-          if (visible.isEmpty) {
-            return _query.isNotEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 56,
-                          color: isDark
-                              ? AppColors.textDisabledDark
-                              : AppColors.textDisabledLight,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        Text(
-                          'Nenhuma conversa encontrada',
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : AppEmptyState(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    title: 'Nenhuma conversa ainda',
-                    subtitle:
-                        'Encontre pessoas próximas e comece a conversar!',
-                    actionLabel: 'Explorar nearby',
-                    onAction: () => context.go(AppRoutes.nearby),
-                  );
+          if (!_isSearching && visible.isEmpty) {
+            return AppEmptyState(
+              icon: Icons.chat_bubble_outline_rounded,
+              title: 'Nenhuma conversa ainda',
+              subtitle: 'Encontre pessoas próximas e comece a conversar!',
+              actionLabel: 'Explorar nearby',
+              onAction: () => context.go(AppRoutes.nearby),
+            );
           }
 
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () =>
-                ref.read(conversationsProvider.notifier).refresh(),
-            child: ListView.separated(
-              itemCount: visible.length,
-              separatorBuilder: (_, __) => Divider(
-                height: 1,
-                indent: 72,
-                color:
-                    isDark ? AppColors.borderDark : AppColors.borderLight,
-              ),
-              itemBuilder: (context, index) {
-                final conv = visible[index];
-                return Dismissible(
-                  key: ValueKey(conv.id),
-                  direction: DismissDirection.endToStart,
-                  background: _ArchiveBackground(),
-                  confirmDismiss: (_) async => false,
-                  child: ConversationTile(
-                    conversation: conv,
-                    onTap: () {
-                      ref
-                          .read(conversationsProvider.notifier)
-                          .markRead(conv.id);
-                      context.push(
-                        AppRoutes.chatConversationPath(conv.id),
-                        extra: conv,
+          return CustomScrollView(
+            slivers: [
+              // Conversas existentes
+              if (visible.isNotEmpty) ...[
+                if (_isSearching && _query.isNotEmpty)
+                  _SliverSectionHeader(
+                    label: 'Conversas',
+                    isDark: isDark,
+                  ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final conv = visible[index];
+                      final isLast = index == visible.length - 1;
+                      return Column(
+                        children: [
+                          Dismissible(
+                            key: ValueKey(conv.id),
+                            direction: DismissDirection.endToStart,
+                            background: _ArchiveBackground(),
+                            confirmDismiss: (_) async => false,
+                            child: ConversationTile(
+                              conversation: conv,
+                              onTap: () {
+                                ref
+                                    .read(conversationsProvider.notifier)
+                                    .markRead(conv.id);
+                                context.push(
+                                  AppRoutes.chatConversationPath(conv.id),
+                                  extra: conv,
+                                );
+                              },
+                              onLongPress: () =>
+                                  _showConversationOptions(context, conv.id),
+                            ),
+                          ),
+                          if (!isLast)
+                            Divider(
+                              height: 1,
+                              indent: 72,
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
+                            ),
+                        ],
                       );
                     },
-                    onLongPress: () =>
-                        _showConversationOptions(context, conv.id),
+                    childCount: visible.length,
                   ),
-                );
-              },
-            ),
+                ),
+              ],
+
+              // Seção "Pessoas" — busca global por @username (estilo Telegram)
+              if (_isSearching && _query.isNotEmpty)
+                _UserSearchSection(query: _query, isDark: isDark),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: AppSpacing.xxxl),
+              ),
+            ],
           );
         },
       ),
@@ -259,8 +261,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             ListTile(
               leading:
                   const Icon(Icons.delete_rounded, color: AppColors.error),
-              title: const Text('Excluir',
-                  style: TextStyle(color: AppColors.error)),
+              title: const Text(
+                'Excluir',
+                style: TextStyle(color: AppColors.error),
+              ),
               onTap: () => Navigator.pop(context),
             ),
           ],
@@ -269,6 +273,149 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 }
+
+// ─── User search section (Telegram-style global search) ─────────────────────
+
+class _UserSearchSection extends ConsumerWidget {
+  const _UserSearchSection({
+    required this.query,
+    required this.isDark,
+  });
+
+  final String query;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final results = ref.watch(userSearchProvider(query));
+
+    return results.when(
+      loading: () => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (_, __) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+      data: (users) {
+        if (users.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+        return SliverMainAxisGroup(
+          slivers: [
+            _SliverSectionHeader(label: 'Pessoas', isDark: isDark),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final user = users[index];
+                  final isLast = index == users.length - 1;
+                  return Column(
+                    children: [
+                      _UserResultTile(user: user, isDark: isDark),
+                      if (!isLast)
+                        Divider(
+                          height: 1,
+                          indent: 72,
+                          color:
+                              isDark ? AppColors.borderDark : AppColors.borderLight,
+                        ),
+                    ],
+                  );
+                },
+                childCount: users.length,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _UserResultTile extends StatelessWidget {
+  const _UserResultTile({required this.user, required this.isDark});
+
+  final SearchResultModel user;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: () => context.push(AppRoutes.userProfilePath(user.id)),
+      leading: CircleAvatar(
+        radius: 26,
+        backgroundImage:
+            user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
+        backgroundColor:
+            isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariantLight,
+        child: user.avatarUrl == null
+            ? const Icon(Icons.person_rounded, size: 26)
+            : null,
+      ),
+      title: Text(
+        user.title,
+        style: AppTypography.titleSmall.copyWith(
+          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+        ),
+      ),
+      subtitle: user.subtitle != null
+          ? Text(
+              user.subtitle!,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            )
+          : null,
+      trailing: user.trailing != null
+          ? Text(
+              user.trailing!,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+// ─── Section header ──────────────────────────────────────────────────────────
+
+class _SliverSectionHeader extends StatelessWidget {
+  const _SliverSectionHeader({required this.label, required this.isDark});
+
+  final String label;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.xs,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Archive background ───────────────────────────────────────────────────────
 
 class _ArchiveBackground extends StatelessWidget {
   @override
@@ -285,15 +432,18 @@ class _ArchiveBackground extends StatelessWidget {
           Text(
             'Arquivar',
             style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600),
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 class _ConversationsSkeleton extends StatelessWidget {
   const _ConversationsSkeleton();

@@ -10,9 +10,11 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/chat/data/models/conversation_model.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
-import '../../features/feed/data/models/post_model.dart';
-import '../../features/feed/presentation/screens/comments_screen.dart';
-import '../../features/feed/presentation/screens/feed_screen.dart';
+import '../../features/eventos/presentation/screens/eventos_screen.dart';
+import '../../features/explorar/presentation/screens/explorar_screen.dart';
+// import '../../features/feed/data/models/post_model.dart';
+// import '../../features/feed/presentation/screens/comments_screen.dart';
+// import '../../features/feed/presentation/screens/feed_screen.dart';
 import '../../features/goals/presentation/screens/goals_screen.dart';
 import '../../features/nearby/presentation/screens/nearby_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -47,7 +49,7 @@ GoRouter appRouter(Ref ref) {
 
       if (!isLoggedIn && !isAuthRoute) return AppRoutes.login;
       if (isLoggedIn && state.matchedLocation == AppRoutes.login) {
-        return AppRoutes.feed;
+        return AppRoutes.chat;
       }
       return null;
     },
@@ -72,22 +74,21 @@ GoRouter appRouter(Ref ref) {
         builder: (_, __) => const OnboardingScreen(),
       ),
 
-      // Shell — Bottom Navigation
-      // Comments screen (takes post via extra)
-      GoRoute(
-        path: '/feed/post/:postId/comments',
-        pageBuilder: (context, state) {
-          final post = state.extra as PostModel?;
-          return slideTransitionPage(
-            pageKey: state.pageKey,
-            child: post == null
-                ? const Scaffold(
-                    body: Center(child: Text('Post não encontrado')),
-                  )
-                : CommentsScreen(post: post),
-          );
-        },
-      ),
+      // Feed — comentado, fora do shell por enquanto
+      // GoRoute(
+      //   path: '/feed/post/:postId/comments',
+      //   pageBuilder: (context, state) {
+      //     final post = state.extra as PostModel?;
+      //     return slideTransitionPage(
+      //       pageKey: state.pageKey,
+      //       child: post == null
+      //           ? const Scaffold(
+      //               body: Center(child: Text('Post não encontrado')),
+      //             )
+      //           : CommentsScreen(post: post),
+      //     );
+      //   },
+      // ),
 
       // Add / Edit PR
       GoRoute(
@@ -116,30 +117,7 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state, navigationShell) =>
             _ScaffoldWithBottomNav(navigationShell: navigationShell),
         branches: [
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.feed,
-                builder: (_, __) => const FeedScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.prs,
-                builder: (_, __) => const PrsScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.nearby,
-                builder: (_, __) => const NearbyScreen(),
-              ),
-            ],
-          ),
+          // Chat — tela inicial
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -166,6 +144,38 @@ GoRouter appRouter(Ref ref) {
               ),
             ],
           ),
+
+          // Nearby
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.nearby,
+                builder: (_, __) => const NearbyScreen(),
+              ),
+            ],
+          ),
+
+          // Eventos
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.eventos,
+                builder: (_, __) => const EventosScreen(),
+              ),
+            ],
+          ),
+
+          // Explorar
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.explorar,
+                builder: (_, __) => const ExplorarScreen(),
+              ),
+            ],
+          ),
+
+          // Perfil
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -185,7 +195,25 @@ GoRouter appRouter(Ref ref) {
         ],
       ),
 
-      // Goals
+      // Feed — comentado
+      // GoRoute(
+      //   path: AppRoutes.feed,
+      //   pageBuilder: (_, state) => slideTransitionPage(
+      //     pageKey: state.pageKey,
+      //     child: const FeedScreen(),
+      //   ),
+      // ),
+
+      // PRs (acessível via Explorar)
+      GoRoute(
+        path: AppRoutes.prs,
+        pageBuilder: (_, state) => slideTransitionPage(
+          pageKey: state.pageKey,
+          child: const PrsScreen(),
+        ),
+      ),
+
+      // Goals (acessível via Explorar)
       GoRoute(
         path: AppRoutes.goals,
         pageBuilder: (_, state) => slideTransitionPage(
@@ -194,7 +222,7 @@ GoRouter appRouter(Ref ref) {
         ),
       ),
 
-      // Notifications (modal-like, outside shell)
+      // Notifications
       GoRoute(
         path: AppRoutes.notifications,
         pageBuilder: (_, state) => slideTransitionPage(
@@ -239,14 +267,9 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
 
   static const _destinations = [
     _NavDestination(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: 'Feed',
-    ),
-    _NavDestination(
-      icon: Icons.emoji_events_outlined,
-      activeIcon: Icons.emoji_events,
-      label: 'PRs',
+      icon: Icons.chat_bubble_outline,
+      activeIcon: Icons.chat_bubble,
+      label: 'Chat',
     ),
     _NavDestination(
       icon: Icons.location_on_outlined,
@@ -254,9 +277,14 @@ class _ScaffoldWithBottomNav extends StatelessWidget {
       label: 'Nearby',
     ),
     _NavDestination(
-      icon: Icons.chat_bubble_outline,
-      activeIcon: Icons.chat_bubble,
-      label: 'Chat',
+      icon: Icons.event_outlined,
+      activeIcon: Icons.event,
+      label: 'Eventos',
+    ),
+    _NavDestination(
+      icon: Icons.explore_outlined,
+      activeIcon: Icons.explore,
+      label: 'Explorar',
     ),
     _NavDestination(
       icon: Icons.person_outline,
@@ -309,6 +337,7 @@ class _FluidBottomNavState extends State<_FluidBottomNav>
   late final AnimationController _indicatorCtrl;
   late Animation<double> _indicatorPos;
   int _prevIndex = 0;
+  DateTime? _lastTap;
 
   @override
   void initState() {
@@ -400,7 +429,16 @@ class _FluidBottomNavState extends State<_FluidBottomNav>
                           label: '${dest.label}${isActive ? ", selecionado" : ""}',
                           button: true,
                           child: GestureDetector(
-                            onTap: () => widget.onTap(i),
+                            onTap: () {
+                              final now = DateTime.now();
+                              if (_lastTap != null &&
+                                  now.difference(_lastTap!) <
+                                      const Duration(milliseconds: 400)) {
+                                return;
+                              }
+                              _lastTap = now;
+                              widget.onTap(i);
+                            },
                             behavior: HitTestBehavior.opaque,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -477,7 +515,7 @@ class _NotFoundScreen extends StatelessWidget {
             ],
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(AppRoutes.feed),
+              onPressed: () => context.go(AppRoutes.chat),
               child: const Text('Voltar ao início'),
             ),
           ],

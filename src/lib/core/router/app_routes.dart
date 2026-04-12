@@ -8,9 +8,10 @@ abstract final class AppRoutes {
 
   // Shell tabs
   static const feed = '/feed';
-  static const prs = '/prs';
   static const nearby = '/nearby';
   static const chat = '/chat';
+  static const eventos = '/eventos';
+  static const explorar = '/explorar';
   static const profile = '/profile';
 
   // Feed nested
@@ -39,6 +40,7 @@ abstract final class AppRoutes {
   static const search = '/search';
   static const explore = '/explore';
   static const goals = '/goals';
+  static const prs = '/prs';
 
   // Helpers for parameterized routes
   static String postDetailPath(String postId) => '/feed/post/$postId';

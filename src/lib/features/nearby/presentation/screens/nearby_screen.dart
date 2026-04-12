@@ -29,8 +29,11 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Solicita permissão na primeira visita
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Solicita permissão na primeira visita — delay garante que o navigator
+    // terminou de processar a navegação antes de abrir o dialog.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
       final perm = ref.read(locationPermissionProvider);
       if (perm == LocationPermissionStatus.unknown) {
         _requestLocationPermission();
@@ -47,7 +50,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
   void _requestLocationPermission() {
     showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
             Text('📍', style: TextStyle(fontSize: 24)),
@@ -66,7 +69,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
             onPressed: () {
               ref.read(locationPermissionProvider.notifier).state =
                   LocationPermissionStatus.denied;
-              Navigator.pop(context);
+              Navigator.of(dialogContext).pop();
             },
             child: const Text('Não agora'),
           ),
@@ -74,7 +77,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
             onPressed: () {
               ref.read(locationPermissionProvider.notifier).state =
                   LocationPermissionStatus.granted;
-              Navigator.pop(context);
+              Navigator.of(dialogContext).pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

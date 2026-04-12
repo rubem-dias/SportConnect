@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -153,10 +155,16 @@ class _ProfileSliverAppBar extends ConsumerWidget {
             ),
       automaticallyImplyLeading: !profile.isMe,
       actions: [
-        if (profile.isMe)
+        if (profile.isMe) ...[
+          IconButton(
+            icon: const Icon(Icons.qr_code_rounded),
+            tooltip: 'Meu QR Code',
+            onPressed: () => _showQrSheet(context, profile.username),
+          ),
           _NotificationsBell(
             onTap: () => context.push(AppRoutes.notifications),
           ),
+        ],
         if (!profile.isMe)
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
@@ -192,6 +200,158 @@ class _ProfileSliverAppBar extends ConsumerWidget {
       ),
     );
   }
+}
+
+// ── QR Code sheet ─────────────────────────────────────────────────────────────
+
+void _showQrSheet(BuildContext context, String username) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final handle = username.startsWith('@') ? username : '@$username';
+  final qrData = 'sportconnect://u/$handle';
+
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.xxxl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            'Meu QR Code',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          // QR Code
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: QrImageView(
+              data: qrData,
+              size: 220,
+              eyeStyle: const QrEyeStyle(
+                eyeShape: QrEyeShape.square,
+                color: Color(0xFF5C6BC0),
+              ),
+              dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            handle,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Aponte a câmera para adicionar no SportConnect',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: handle));
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Username copiado!'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.copy_rounded, size: 18),
+                label: const Text('Copiar'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.sm,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // Share via sistema — integração futura com share_plus
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.share_rounded, size: 18),
+                label: const Text('Compartilhar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.sm,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 // ── Header ────────────────────────────────────────────────────────────────────

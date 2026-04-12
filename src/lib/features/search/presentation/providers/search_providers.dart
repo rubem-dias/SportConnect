@@ -114,3 +114,11 @@ final suggestedUsersProvider =
     FutureProvider<List<SearchResultModel>>((ref) async {
   return ref.read(searchRepositoryProvider).getSuggestedUsers();
 });
+
+// ─── User search by @username (used in ChatListScreen) ──────────────────────
+
+final userSearchProvider =
+    FutureProvider.family<List<SearchResultModel>, String>((ref, query) async {
+  if (query.trim().isEmpty) return [];
+  return ref.read(searchRepositoryProvider).searchUsers(query);
+});

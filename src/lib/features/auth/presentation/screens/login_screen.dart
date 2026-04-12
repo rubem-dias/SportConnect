@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -120,12 +121,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           if (_isSocialFlow) {
             final hasOnboardingData =
                 user.sports.isNotEmpty && user.level.isNotEmpty;
-            context.go(hasOnboardingData ? AppRoutes.feed : AppRoutes.onboarding);
+            context.go(hasOnboardingData ? AppRoutes.chat : AppRoutes.onboarding);
             _isSocialFlow = false;
             return;
           }
 
-          context.go(AppRoutes.feed);
+          context.go(AppRoutes.chat);
         },
       );
     });
@@ -237,16 +238,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: AppSpacing.sm),
 
-                AppButton(
-                  label: 'Entrar em modo teste',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: isLoading
-                      ? null
-                      : () {
-                          ref.read(devBypassAuthProvider.notifier).state = true;
-                          context.go(AppRoutes.feed);
-                        },
-                ),
+                if (kDebugMode)
+                  AppButton(
+                    label: 'Entrar em modo teste',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            ref.read(devBypassAuthProvider.notifier).state =
+                                true;
+                            context.go(AppRoutes.chat);
+                          },
+                  ),
 
                 const SizedBox(height: AppSpacing.lg),
 

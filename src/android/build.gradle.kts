@@ -1,10 +1,21 @@
+import java.util.Properties
+
+// Lê o token secreto do Mapbox de android/secrets.properties (gitignored).
+// Fallback: variável de ambiente MAPBOX_DOWNLOADS_TOKEN (útil em CI/CD).
+val secretsFile = rootProject.file("secrets.properties")
+val mapboxDownloadsToken: String = if (secretsFile.exists()) {
+    Properties().apply { secretsFile.inputStream().use { load(it) } }
+        .getProperty("MAPBOX_DOWNLOADS_TOKEN", "")
+} else {
+    System.getenv("MAPBOX_DOWNLOADS_TOKEN") ?: ""
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
         // Repositório privado do Mapbox SDK para Android.
-        // Requer MAPBOX_DOWNLOADS_TOKEN em android/gradle.properties
-        // (token secreto sk.ey... com escopo DOWNLOADS:READ — NÃO commitar).
+        // Token lido de android/secrets.properties — nunca commitar esse arquivo.
         maven {
             url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
             authentication {
@@ -12,7 +23,7 @@ allprojects {
             }
             credentials {
                 username = "mapbox"
-                password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orElse("").get()
+                password = mapboxDownloadsToken
             }
         }
     }

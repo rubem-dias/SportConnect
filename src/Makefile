@@ -5,20 +5,20 @@
 
 ## Roda o app em modo dev (Windows desktop, com mocks)
 dev:
-	flutter run -t lib/main_dev.dart -d windows
+	flutter run -t lib/main_dev.dart -d windows --dart-define-from-file=.env.json
 
 ## Roda o app em modo dev no browser
 dev-web:
-	flutter run -t lib/main_dev.dart -d edge
+	flutter run -t lib/main_dev.dart -d edge --dart-define-from-file=.env.json
 
 ## Roda no device/emulator Android — rode `flutter devices` pra ver o ID e passe: make dev-android DEVICE=emulator-5554
 dev-android:
-# 	flutter run -t lib/main_dev.dart -d $(DEVICE)
-	flutter run -t lib/main_dev.dart -d emulator-5554
+# 	flutter run -t lib/main_dev.dart -d $(DEVICE) --dart-define-from-file=.env.json
+	flutter run -t lib/main_dev.dart -d emulator-5554 --dart-define-from-file=.env.json
 
 ## Roda no celular físico via USB (Flutter detecta automaticamente; se houver mais de um device, ele pergunta)
 dev-usb:
-	flutter run -t lib/main_dev.dart
+	flutter run -t lib/main_dev.dart --dart-define-from-file=.env.json
 
 ## Instala dependências
 get:

@@ -9,10 +9,12 @@ build/
 *.g.dart
 *.freezed.dart
 
-# Environment
+# Environment / Secrets
 *.env
 .env.*
+.env.json
 lib/core/env/*.env.dart
+**/android/secrets.properties
 
 # Android
 **/android/**/gradle-wrapper.jar

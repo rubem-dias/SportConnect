@@ -1,21 +1,18 @@
 /// Configuração do Mapbox para o SportConnect.
 ///
-/// O token público (pk.ey...) é seguro de distribuir no app — o Mapbox
-/// permite restringi-lo por Bundle ID / package name no dashboard.
+/// Tokens são injetados via --dart-define-from-file=.env.json em build time.
+/// Nunca hardcode tokens no código-fonte.
 ///
-/// Passos para configurar:
-/// 1. Acesse https://account.mapbox.com → Access Tokens
-/// 2. Crie um token público com escopo padrão e restrinja ao bundle do app
-/// 3. Substitua a string abaixo pelo token (pk.ey...)
-/// 4. Para Android: coloque o token secreto (sk.ey...) em android/gradle.properties
-/// 5. Para iOS: configure ~/.netrc com o token secreto (ver README)
+/// Setup:
+/// 1. Copie .env.json.example → .env.json e preencha com seu token público (pk.ey...)
+/// 2. Copie android/secrets.properties.example → android/secrets.properties
+///    e preencha com seu token secreto (sk.ey...)
+/// 3. Os comandos `make dev-usb` / `make dev` já passam --dart-define-from-file automaticamente
 class MapboxConfig {
   MapboxConfig._();
 
-  /// Token público do Mapbox (pk.ey...).
-  /// Exibido publicamente no binário — restrinja-o por bundle ID no dashboard.
-  static const String publicToken =
-      'pk.eyJ1IjoicmRzaWx2YTIyIiwiYSI6ImNtbzRxNzBpeDFqcnIydHB5NWozenFrYzEifQ.Os1Y-74kHxaONMQx6D1_og';
+  /// Token público do Mapbox (pk.ey...) — injetado via --dart-define-from-file=.env.json.
+  static const String publicToken = String.fromEnvironment('MAPBOX_PUBLIC_TOKEN');
 
   /// URI do estilo para modo claro.
   static const String styleLight = 'mapbox://styles/mapbox/streets-v12';

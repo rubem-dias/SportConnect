@@ -1,9 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart' as geo;
+import 'package:go_router/go_router.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+
+import '../../../../core/config/mapbox_config.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -12,6 +17,8 @@ import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_loading_skeleton.dart';
 import '../../data/models/nearby_model.dart';
 import '../providers/nearby_providers.dart';
+
+// ── Tela principal ────────────────────────────────────────────────────────────
 
 class NearbyScreen extends ConsumerStatefulWidget {
   const NearbyScreen({super.key});
@@ -23,14 +30,16 @@ class NearbyScreen extends ConsumerStatefulWidget {
 class _NearbyScreenState extends ConsumerState<NearbyScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  /// true = mostra mapa; false = mostra lista por tabs.
+  /// O widget do mapa SEMPRE existe na árvore (IndexedStack) para não
+  /// reinicializar o MapboxMap desnecessariamente (cada init = 1 map load).
   bool _showMap = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Solicita permissão na primeira visita — delay garante que o navigator
-    // terminou de processar a navegação antes de abrir o dialog.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future<void>.delayed(const Duration(milliseconds: 300));
       if (!mounted) return;
@@ -47,10 +56,24 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
     super.dispose();
   }
 
-  void _requestLocationPermission() {
-    showDialog<void>(
+  Future<void> _requestLocationPermission() async {
+    // Verifica se já foi concedida (ex: segundo launch do app).
+    var existing = await geo.Geolocator.checkPermission();
+    if (existing == geo.LocationPermission.always ||
+        existing == geo.LocationPermission.whileInUse) {
+      if (mounted) {
+        ref.read(locationPermissionProvider.notifier).state =
+            LocationPermissionStatus.granted;
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    // Mostra nossa explicação LGPD antes do diálogo do sistema.
+    final userAgreed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Row(
           children: [
             Text('📍', style: TextStyle(fontSize: 24)),
@@ -66,19 +89,11 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              ref.read(locationPermissionProvider.notifier).state =
-                  LocationPermissionStatus.denied;
-              Navigator.of(dialogContext).pop();
-            },
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Não agora'),
           ),
           ElevatedButton(
-            onPressed: () {
-              ref.read(locationPermissionProvider.notifier).state =
-                  LocationPermissionStatus.granted;
-              Navigator.of(dialogContext).pop();
-            },
+            onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -88,6 +103,25 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
         ],
       ),
     );
+
+    if (userAgreed != true) {
+      ref.read(locationPermissionProvider.notifier).state =
+          LocationPermissionStatus.denied;
+      return;
+    }
+
+    // Solicita a permissão real do sistema.
+    final result = await geo.Geolocator.requestPermission();
+    if (!mounted) return;
+
+    if (result == geo.LocationPermission.always ||
+        result == geo.LocationPermission.whileInUse) {
+      ref.read(locationPermissionProvider.notifier).state =
+          LocationPermissionStatus.granted;
+    } else {
+      ref.read(locationPermissionProvider.notifier).state =
+          LocationPermissionStatus.denied;
+    }
   }
 
   @override
@@ -113,7 +147,6 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
           ),
         ),
         actions: [
-          // Ícone de privacidade
           IconButton(
             icon: Icon(
               ref.watch(privacyModeProvider) == PrivacyMode.exact
@@ -149,8 +182,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
               ? AppColors.textSecondaryDark
               : AppColors.textSecondaryLight,
           indicatorColor: AppColors.primary,
-          dividerColor:
-              isDark ? AppColors.borderDark : AppColors.borderLight,
+          dividerColor: isDark ? AppColors.borderDark : AppColors.borderLight,
           tabs: const [
             Tab(text: 'Atletas'),
             Tab(text: 'Academias'),
@@ -159,15 +191,21 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
       ),
       body: permission == LocationPermissionStatus.denied
           ? _PermissionDeniedState(onRetry: _requestLocationPermission)
-          : _showMap
-              ? _NearbyMapView(isDark: isDark)
-              : TabBarView(
+          : IndexedStack(
+              // IndexedStack mantém ambas as views vivas simultaneamente.
+              // O MapboxMap nunca é descartado → zero reinicializações desnecessárias.
+              index: _showMap ? 0 : 1,
+              children: [
+                _NearbyMapView(key: const ValueKey('nearby_mapbox_map')),
+                TabBarView(
                   controller: _tabController,
                   children: [
                     _UsersTab(isDark: isDark),
                     _GymsTab(isDark: isDark),
                   ],
                 ),
+              ],
+            ),
     );
   }
 
@@ -247,8 +285,10 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
                         ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Raio de busca: ${_radiusLabel(filters.radiusMeters)}',
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Raio de busca: ${_radiusLabel(filters.radiusMeters)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   Slider(
                     value: filters.radiusMeters,
                     min: 500,
@@ -302,7 +342,380 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
   }
 }
 
-// ── Users Tab ─────────────────────────────────────────────────────────────────
+// ── Mapa Mapbox ───────────────────────────────────────────────────────────────
+
+/// Exibe o mapa Mapbox com pins de atletas e academias.
+///
+/// Otimizações de free tier aplicadas:
+/// • [IndexedStack] no pai → widget nunca é descartado → zero reinits do MapboxMap.
+///   Cada inicialização do MapboxMap = 1 "map load" no quota de 50k/mês.
+/// • Vector tiles (streets-v12) → Mapbox agrupa todos os tiles de uma sessão
+///   em um único map load, sem cobranças extras por tile individual.
+/// • Tiles são cacheados automaticamente pelo SDK (até 75 MB on-device) →
+///   regiões já visitadas não geram novas requisições ao abrir o app.
+/// • [PointAnnotationManager] criado UMA vez e reusado em cada atualização.
+///   Evita overhead de recriar managers (seria um extra style load por vez).
+/// • rotate e pitch desativados via [GesturesSettings] → menos processamento.
+class _NearbyMapView extends ConsumerStatefulWidget {
+  const _NearbyMapView({super.key});
+
+  @override
+  ConsumerState<_NearbyMapView> createState() => _NearbyMapViewState();
+}
+
+class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
+  MapboxMap? _mapboxMap;
+  PointAnnotationManager? _userManager;
+  PointAnnotationManager? _gymManager;
+
+  /// Mapeia annotation.id → NearbyUser para identificar o tap correto.
+  final Map<String, NearbyUser> _userById = {};
+
+  /// Mapeia annotation.id → NearbyGym para identificar o tap correto.
+  final Map<String, NearbyGym> _gymById = {};
+
+  /// Imagens dos pins renderizadas via Canvas uma única vez e reutilizadas
+  /// em todas as anotações do mesmo tipo.
+  Uint8List? _myPin;
+  Uint8List? _userPin;
+  Uint8List? _gymPin;
+
+  /// true quando os três pins já foram renderizados e estão prontos.
+  bool _pinsReady = false;
+
+  /// Referência ao annotation "minha localização" para atualizar sem re-sync geral.
+  PointAnnotation? _myAnnotation;
+
+  /// Posição atual do usuário (GeoJSON [lng, lat]).
+  /// Começa como null; preenchida quando geolocator responde.
+  Position? _myPosition;
+
+  // Fallback enquanto GPS não está pronto (centro do Brasil para não
+  // mostrar SP/RJ por padrão — o mapa vai voar para a posição real assim que
+  // currentPositionProvider resolver).
+  static const _fallbackLat = -15.7801;
+  static const _fallbackLng = -47.9292; // Brasília
+
+  @override
+  void initState() {
+    super.initState();
+    _buildPins();
+  }
+
+  // ── Renderização dos pins ─────────────────────────────────────────────────
+
+  /// Renderiza os três tipos de pin em paralelo usando Flutter Canvas.
+  /// Resultado em PNG bytes — compatível diretamente com [PointAnnotationOptions.image].
+  Future<void> _buildPins() async {
+    final results = await Future.wait([
+      _renderPin(fillColor: AppColors.primary),   // minha localização
+      _renderPin(fillColor: AppColors.secondary), // outros atletas
+      _renderPin(fillColor: AppColors.success),   // academias
+    ]);
+    if (!mounted) return;
+    _myPin = results[0];
+    _userPin = results[1];
+    _gymPin = results[2];
+    _pinsReady = true;
+    // Sincroniza se os managers já estão prontos (não só o mapa).
+    if (_userManager != null && _gymManager != null) _syncMarkers();
+  }
+
+  /// Pinta um círculo com sombra e borda branca e retorna PNG de 48×48 px.
+  /// Executado uma vez por cor — resultado é reutilizado para todos os pins
+  /// daquele tipo, sem custo adicional de requisição ao Mapbox.
+  Future<Uint8List> _renderPin({required Color fillColor}) async {
+    const sz = 48.0;
+    const center = Offset(sz / 2, sz / 2);
+    const r = sz / 2 - 5.0;
+
+    final rec = ui.PictureRecorder();
+    final canvas = Canvas(rec);
+
+    // Sombra suave
+    canvas.drawCircle(
+      center.translate(0, 1.5),
+      r,
+      Paint()
+        ..color = Colors.black.withAlpha(50)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+
+    // Preenchimento colorido
+    canvas.drawCircle(center, r, Paint()..color = fillColor);
+
+    // Borda branca
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
+
+    final img = await rec.endRecording().toImage(sz.toInt(), sz.toInt());
+    final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+    return bytes!.buffer.asUint8List();
+  }
+
+  // ── Localização real ─────────────────────────────────────────────────────
+
+  /// Chamado quando o GPS responde. Voa a câmera e atualiza o pin "eu"
+  /// sem recriar todos os outros markers.
+  Future<void> _onPositionReady(geo.Position pos) async {
+    _myPosition = Position(pos.longitude, pos.latitude);
+
+    // Voa para a posição real com animação suave.
+    await _mapboxMap?.flyTo(
+      CameraOptions(
+        center: Point(coordinates: _myPosition!),
+        zoom: 14.0,
+      ),
+      MapAnimationOptions(duration: 900),
+    );
+
+    // Atualiza apenas o pin "eu" sem deletar todos os outros markers.
+    // try/catch necessário: _myAnnotation pode ter sido removida pelo
+    // deleteAll() em _syncMarkers concorrente — nesse caso re-sincroniza tudo.
+    final ann = _myAnnotation;
+    if (ann != null) {
+      try {
+        ann.geometry = Point(coordinates: _myPosition!);
+        await _userManager?.update(ann);
+      } catch (_) {
+        // Annotation foi removida do mapa (race com _syncMarkers) — recria tudo.
+        _syncMarkers();
+      }
+    }
+  }
+
+  // ── Callbacks do mapa ─────────────────────────────────────────────────────
+
+  void _onMapCreated(MapboxMap map) async {
+    _mapboxMap = map;
+
+    // Desativa rotação e inclinação — não usados no Nearby e evitam
+    // processamento desnecessário no render loop.
+    await map.gestures.updateSettings(
+      GesturesSettings(rotateEnabled: false, pitchEnabled: false),
+    );
+
+    // Managers são criados em _onStyleLoaded, onde o estilo está garantidamente
+    // carregado. Criar aqui pode causar PlatformException silenciosa se o
+    // estilo ainda não terminou de carregar.
+  }
+
+  /// Chamado pelo SDK quando o estilo foi completamente carregado.
+  ///
+  /// Annotation managers exigem que o estilo esteja pronto — criá-los em
+  /// [_onMapCreated] pode falhar silenciosamente se o estilo ainda estava
+  /// carregando (o callback é async void, então a exceção é descartada).
+  void _onStyleLoaded(StyleLoadedEventData _) async {
+    final map = _mapboxMap;
+    if (map == null) return;
+
+    // Managers criados UMA vez por carregamento de estilo.
+    // Ordem importa: gyms embaixo, users em cima.
+    _gymManager =
+        await map.annotations.createPointAnnotationManager(id: 'sc_gyms');
+    _userManager =
+        await map.annotations.createPointAnnotationManager(id: 'sc_users');
+
+    // Listeners de tap via implementação dedicada (exigência da API do SDK).
+    _userManager!.addOnPointAnnotationClickListener(
+      _AnnotationClickListener<NearbyUser>(
+        dataById: _userById,
+        onTap: _showUserSheet,
+      ),
+    );
+    _gymManager!.addOnPointAnnotationClickListener(
+      _AnnotationClickListener<NearbyGym>(
+        dataById: _gymById,
+        onTap: _showGymSheet,
+      ),
+    );
+
+    // Sincroniza agora que o estilo e os managers estão prontos.
+    // ref.read lê o valor atual dos providers sem criar nova subscrição.
+    if (_pinsReady) _syncMarkers();
+  }
+
+  // ── Sincronização de markers ──────────────────────────────────────────────
+
+  /// Recria todos os markers com os dados atuais dos providers.
+  ///
+  /// Usa [deleteAll] + [createMulti] para batch eficiente —
+  /// muito mais rápido que deletar/criar individualmente.
+  Future<void> _syncMarkers() async {
+    // Captura referências locais — garante que nenhuma seja null durante a
+    // execução assíncrona (race condition entre _buildPins e _onMapCreated).
+    final userMgr = _userManager;
+    final gymMgr = _gymManager;
+    final myPin = _myPin;
+    final userPin = _userPin;
+    final gymPin = _gymPin;
+    if (userMgr == null || gymMgr == null ||
+        myPin == null || userPin == null || gymPin == null) return;
+
+    final users = ref.read(nearbyUsersProvider).valueOrNull ?? [];
+    final gyms = ref.read(nearbyGymsProvider).valueOrNull ?? [];
+
+    _userById.clear();
+    _gymById.clear();
+
+    await Future.wait([
+      userMgr.deleteAll(),
+      gymMgr.deleteAll(),
+    ]);
+
+    // Pin "minha localização"
+    final myCoords = _myPosition ?? Position(_fallbackLng, _fallbackLat);
+    _myAnnotation = await userMgr.create(PointAnnotationOptions(
+      geometry: Point(coordinates: myCoords),
+      image: myPin,
+      iconSize: 1.1,
+    ));
+
+    // Pins de atletas — batch create
+    final usersWithCoords =
+        users.where((u) => u.lat != null && u.lng != null).toList();
+    if (usersWithCoords.isNotEmpty) {
+      final created = await userMgr.createMulti(
+        usersWithCoords
+            .map((u) => PointAnnotationOptions(
+                  geometry: Point(coordinates: Position(u.lng!, u.lat!)),
+                  image: userPin,
+                  iconSize: 1.0,
+                  textField: u.name,
+                  textSize: 11.0,
+                  textOffset: [0.0, 2.2],
+                  textColor: Colors.black.value,
+                  textHaloColor: Colors.white.value,
+                  textHaloWidth: 1.5,
+                ))
+            .toList(),
+      );
+      for (var i = 0; i < created.length; i++) {
+        final id = created[i]?.id;
+        if (id != null) _userById[id] = usersWithCoords[i];
+      }
+    }
+
+    // Pins de academias — batch create
+    final gymsWithCoords =
+        gyms.where((g) => g.lat != null && g.lng != null).toList();
+    if (gymsWithCoords.isNotEmpty) {
+      final created = await gymMgr.createMulti(
+        gymsWithCoords
+            .map((g) => PointAnnotationOptions(
+                  geometry: Point(coordinates: Position(g.lng!, g.lat!)),
+                  image: gymPin,
+                  iconSize: 1.0,
+                  textField: g.name,
+                  textSize: 11.0,
+                  textOffset: [0.0, 2.2],
+                  textColor: Colors.black.value,
+                  textHaloColor: Colors.white.value,
+                  textHaloWidth: 1.5,
+                ))
+            .toList(),
+      );
+      for (var i = 0; i < created.length; i++) {
+        final id = created[i]?.id;
+        if (id != null) _gymById[id] = gymsWithCoords[i];
+      }
+    }
+  }
+
+  // ── Bottom sheets ─────────────────────────────────────────────────────────
+
+  void _showUserSheet(NearbyUser user) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => _UserBottomSheet(user: user),
+    );
+  }
+
+  void _showGymSheet(NearbyGym gym) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => _GymBottomSheet(gym: gym),
+    );
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Voa para posição real via listener (side-effect, não precisa de rebuild).
+    ref.listen(currentPositionProvider, (_, next) {
+      next.whenData((pos) {
+        if (pos != null) _onPositionReady(pos);
+      });
+    });
+
+    // Watch em vez de listen — causa rebuild quando os dados chegam.
+    // Após o rebuild, agenda _syncMarkers para o próximo frame,
+    // garantindo que managers e pins já estão prontos.
+    final gymsAsync = ref.watch(nearbyGymsProvider);
+    final usersAsync = ref.watch(nearbyUsersProvider);
+
+    if (gymsAsync.hasValue || usersAsync.hasValue) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _syncMarkers();
+      });
+    }
+
+    return MapWidget(
+      // Chave estável: impede que o Flutter recrie o widget ao reordenar a
+      // árvore, garantindo que o mesmo MapboxMap (e seus tiles em cache)
+      // sejam reutilizados durante toda a sessão.
+      key: const ValueKey('nearby_mapbox_map_inner'),
+      styleUri: isDark ? MapboxConfig.styleDark : MapboxConfig.styleLight,
+      cameraOptions: CameraOptions(
+        center: Point(
+          coordinates: _myPosition ?? Position(_fallbackLng, _fallbackLat),
+        ),
+        zoom: _myPosition != null ? 14.0 : 4.5, // zoom out no fallback
+        bearing: 0.0,
+        pitch: 0.0,
+      ),
+      onMapCreated: _onMapCreated,
+      // Annotation managers só podem ser criados depois que o estilo carregou.
+      // onStyleLoadedListener garante essa ordem e evita PlatformException silenciosa.
+      onStyleLoadedListener: _onStyleLoaded,
+    );
+  }
+}
+
+// ── Listener de tap nas annotations ──────────────────────────────────────────
+
+/// Implementação genérica de [OnPointAnnotationClickListener].
+///
+/// Necessário como classe separada pois o SDK exige um objeto que implemente
+/// a interface — closures não são aceitas diretamente.
+class _AnnotationClickListener<T> implements OnPointAnnotationClickListener {
+  const _AnnotationClickListener({
+    required this.dataById,
+    required this.onTap,
+  });
+
+  final Map<String, T> dataById;
+  final void Function(T) onTap;
+
+  @override
+  bool onPointAnnotationClick(PointAnnotation annotation) {
+    final data = dataById[annotation.id];
+    if (data != null) onTap(data);
+    // true = evento consumido, não propaga para o mapa
+    return true;
+  }
+}
+
+// ── Tab de Atletas ────────────────────────────────────────────────────────────
 
 class _UsersTab extends ConsumerWidget {
   const _UsersTab({required this.isDark});
@@ -322,8 +735,7 @@ class _UsersTab extends ConsumerWidget {
           return AppEmptyState(
             icon: Icons.people_outline_rounded,
             title: 'Ninguém por aqui',
-            subtitle:
-                'Aumente o raio de busca ou volte mais tarde',
+            subtitle: 'Aumente o raio de busca ou volte mais tarde',
             actionLabel: 'Ajustar filtros',
             onAction: () {},
           );
@@ -340,8 +752,7 @@ class _UsersTab extends ConsumerWidget {
               indent: 72,
               color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),
-            itemBuilder: (context, i) =>
-                _UserTile(user: users[i], isDark: isDark),
+            itemBuilder: (_, i) => _UserTile(user: users[i], isDark: isDark),
           ),
         );
       },
@@ -395,12 +806,15 @@ class _UserTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(user.username,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight)),
+          Text(
+            user.username,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
           const SizedBox(height: 2),
           Wrap(
             spacing: 4,
@@ -423,122 +837,21 @@ class _UserTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          const Text('de distância',
-              style: TextStyle(
-                  fontSize: 10, color: AppColors.textSecondaryLight)),
+          const Text(
+            'de distância',
+            style: TextStyle(fontSize: 10, color: AppColors.textSecondaryLight),
+          ),
         ],
       ),
-      onTap: () => _showUserSheet(context, user),
-    );
-  }
-
-  void _showUserSheet(BuildContext context, NearbyUser user) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => _UserBottomSheet(user: user),
-    );
-  }
-}
-
-class _UserBottomSheet extends StatelessWidget {
-  const _UserBottomSheet({required this.user});
-
-  final NearbyUser user;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 36,
-              backgroundColor: AppColors.primary.withAlpha(40),
-              backgroundImage:
-                  user.avatar != null ? NetworkImage(user.avatar!) : null,
-              child: user.avatar == null
-                  ? const Icon(Icons.person_rounded,
-                      size: 36, color: AppColors.primary)
-                  : null,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(user.name,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 18)),
-            Text(user.username,
-                style: const TextStyle(
-                    color: AppColors.textSecondaryLight)),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              '${user.distanceLabel} de você',
-              style: const TextStyle(
-                  color: AppColors.primary, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Wrap(
-              spacing: AppSpacing.xs,
-              children: user.sports.map((s) => AppBadge(label: s)).toList(),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.push(
-                          AppRoutes.userProfilePath(user.userId));
-                    },
-                    icon: const Icon(Icons.person_rounded, size: 16),
-                    label: const Text('Ver Perfil'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.push(
-                          AppRoutes.chatConversationPath(user.userId));
-                    },
-                    icon: const Icon(Icons.chat_bubble_outline_rounded,
-                        size: 16),
-                    label: const Text('Mensagem'),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.primary),
-                      foregroundColor: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.fitness_center_rounded, size: 16),
-                label: const Text('Treinar junto'),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.secondary),
-                  foregroundColor: AppColors.secondary,
-                ),
-              ),
-            ),
-          ],
-        ),
+      onTap: () => showModalBottomSheet<void>(
+        context: context,
+        builder: (_) => _UserBottomSheet(user: user),
       ),
     );
   }
 }
 
-// ── Gyms Tab ──────────────────────────────────────────────────────────────────
+// ── Tab de Academias ──────────────────────────────────────────────────────────
 
 class _GymsTab extends ConsumerWidget {
   const _GymsTab({required this.isDark});
@@ -606,12 +919,15 @@ class _GymTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (gym.address != null)
-            Text(gym.address!,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight)),
+            Text(
+              gym.address!,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
           Row(
             children: [
               if (gym.rating != null) ...[
@@ -623,23 +939,21 @@ class _GymTile extends StatelessWidget {
               ],
               if (gym.isOpen != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 5, vertical: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: (gym.isOpen!
-                            ? AppColors.success
-                            : AppColors.error)
+                    color: (gym.isOpen! ? AppColors.success : AppColors.error)
                         .withAlpha(30),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     gym.isOpen! ? 'Aberto' : 'Fechado',
                     style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: gym.isOpen!
-                            ? AppColors.success
-                            : AppColors.error),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          gym.isOpen! ? AppColors.success : AppColors.error,
+                    ),
                   ),
                 ),
             ],
@@ -655,186 +969,108 @@ class _GymTile extends StatelessWidget {
         ),
       ),
       isThreeLine: true,
-    );
-  }
-}
-
-// ── Map View ──────────────────────────────────────────────────────────────────
-
-class _NearbyMapView extends ConsumerWidget {
-  const _NearbyMapView({required this.isDark});
-
-  final bool isDark;
-
-  // Mock current user location (Av. Paulista)
-  static const _myLat = -23.5613;
-  static const _myLng = -46.6563;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final usersAsync = ref.watch(nearbyUsersProvider);
-    final gymsAsync = ref.watch(nearbyGymsProvider);
-
-    final users = usersAsync.valueOrNull ?? [];
-    final gyms = gymsAsync.valueOrNull ?? [];
-
-    final userMarkers = users
-        .where((u) => u.lat != null && u.lng != null)
-        .map(
-          (u) => Marker(
-            point: LatLng(u.lat!, u.lng!),
-            width: 44,
-            height: 44,
-            child: GestureDetector(
-              onTap: () => _showUserSheet(context, u),
-              child: _UserPin(user: u),
-            ),
-          ),
-        )
-        .toList();
-
-    final gymMarkers = gyms
-        .where((g) => g.lat != null && g.lng != null)
-        .map(
-          (g) => Marker(
-            point: LatLng(g.lat!, g.lng!),
-            width: 44,
-            height: 44,
-            child: GestureDetector(
-              onTap: () => _showGymSheet(context, g),
-              child: _GymPin(gym: g),
-            ),
-          ),
-        )
-        .toList();
-
-    return FlutterMap(
-      options: const MapOptions(
-        initialCenter: LatLng(_myLat, _myLng),
-        initialZoom: 14.5,
-        maxZoom: 18,
-        minZoom: 10,
+      onTap: () => showModalBottomSheet<void>(
+        context: context,
+        builder: (_) => _GymBottomSheet(gym: gym),
       ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.sportconnect.app',
-        ),
-        // My location marker
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: const LatLng(_myLat, _myLng),
-              width: 56,
-              height: 56,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.person_rounded,
-                    color: Colors.white, size: 24),
-              ),
-            ),
-          ],
-        ),
-        MarkerLayer(markers: userMarkers),
-        MarkerLayer(markers: gymMarkers),
-      ],
-    );
-  }
-
-  void _showUserSheet(BuildContext context, NearbyUser user) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => _UserBottomSheet(user: user),
-    );
-  }
-
-  void _showGymSheet(BuildContext context, NearbyGym gym) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => _GymBottomSheet(gym: gym),
     );
   }
 }
 
-class _UserPin extends StatelessWidget {
-  const _UserPin({required this.user});
+// ── Bottom Sheets ─────────────────────────────────────────────────────────────
+
+class _UserBottomSheet extends StatelessWidget {
+  const _UserBottomSheet({required this.user});
 
   final NearbyUser user;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.secondary,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [
-              BoxShadow(
-                  color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
-            ],
-          ),
-          child: ClipOval(
-            child: user.avatar != null
-                ? Image.network(user.avatar!, fit: BoxFit.cover)
-                : const Icon(Icons.person_rounded,
-                    color: Colors.white, size: 20),
-          ),
-        ),
-        if (user.isOnline)
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: AppColors.online,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: AppColors.primary.withAlpha(40),
+              backgroundImage:
+                  user.avatar != null ? NetworkImage(user.avatar!) : null,
+              child: user.avatar == null
+                  ? const Icon(Icons.person_rounded,
+                      size: 36, color: AppColors.primary)
+                  : null,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(user.name,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 18)),
+            Text(user.username,
+                style: const TextStyle(color: AppColors.textSecondaryLight)),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '${user.distanceLabel} de você',
+              style: const TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.xs,
+              children: user.sports.map((s) => AppBadge(label: s)).toList(),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.userProfilePath(user.userId));
+                    },
+                    icon: const Icon(Icons.person_rounded, size: 16),
+                    label: const Text('Ver Perfil'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push(
+                          AppRoutes.chatConversationPath(user.userId));
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded,
+                        size: 16),
+                    label: const Text('Mensagem'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.primary),
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.fitness_center_rounded, size: 16),
+                label: const Text('Treinar junto'),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.secondary),
+                  foregroundColor: AppColors.secondary,
+                ),
               ),
             ),
-          ),
-      ],
-    );
-  }
-}
-
-class _GymPin extends StatelessWidget {
-  const _GymPin({required this.gym});
-
-  final NearbyGym gym;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: gym.isOpen == true ? AppColors.success : AppColors.error,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: const [
-          BoxShadow(
-              color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
-        ],
+          ],
+        ),
       ),
-      child: const Icon(Icons.fitness_center_rounded,
-          color: Colors.white, size: 20),
     );
   }
 }
@@ -893,15 +1129,16 @@ class _GymBottomSheet extends StatelessWidget {
                 const Icon(Icons.near_me_rounded,
                     size: 16, color: AppColors.primary),
                 const SizedBox(width: 4),
-                Text(gym.distanceLabel,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary)),
+                Text(
+                  gym.distanceLabel,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, color: AppColors.primary),
+                ),
                 const SizedBox(width: AppSpacing.md),
                 if (gym.isOpen != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color:
                           (gym.isOpen! ? AppColors.success : AppColors.error)
@@ -911,11 +1148,10 @@ class _GymBottomSheet extends StatelessWidget {
                     child: Text(
                       gym.isOpen! ? 'Aberto' : 'Fechado',
                       style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: gym.isOpen!
-                              ? AppColors.success
-                              : AppColors.error),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: gym.isOpen! ? AppColors.success : AppColors.error,
+                      ),
                     ),
                   ),
               ],
@@ -989,14 +1225,15 @@ class _PrivacyOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: selected ? AppColors.primary : null),
-      title: Text(title,
-          style: TextStyle(
-              fontWeight:
-                  selected ? FontWeight.w600 : FontWeight.normal)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
       trailing: selected
-          ? const Icon(Icons.check_circle_rounded,
-              color: AppColors.primary)
+          ? const Icon(Icons.check_circle_rounded, color: AppColors.primary)
           : null,
       onTap: onTap,
     );
@@ -1028,8 +1265,7 @@ class _NearbyListSkeleton extends StatelessWidget {
                 children: [
                   AppLoadingSkeleton(height: 14, borderRadius: 4),
                   SizedBox(height: 6),
-                  AppLoadingSkeleton(
-                      width: 120, height: 12, borderRadius: 4),
+                  AppLoadingSkeleton(width: 120, height: 12, borderRadius: 4),
                 ],
               ),
             ),

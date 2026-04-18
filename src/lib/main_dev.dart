@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'app.dart';
+import 'core/config/mapbox_config.dart';
 import 'core/env/env.dart';
 import 'core/mock/mock_auth_repository.dart';
 import 'core/mock/mock_feed_repository.dart';
@@ -11,6 +13,7 @@ import 'shared/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MapboxOptions.setAccessToken(MapboxConfig.publicToken);
   runApp(
     ProviderScope(
       overrides: [

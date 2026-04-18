@@ -2,6 +2,19 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Repositório privado do Mapbox SDK para Android.
+        // Requer MAPBOX_DOWNLOADS_TOKEN em android/gradle.properties
+        // (token secreto sk.ey... com escopo DOWNLOADS:READ — NÃO commitar).
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+            credentials {
+                username = "mapbox"
+                password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orElse("").get()
+            }
+        }
     }
 }
 

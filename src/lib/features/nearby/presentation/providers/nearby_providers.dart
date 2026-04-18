@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
+import '../../../../core/config/mapbox_config.dart';
 import '../../data/models/nearby_model.dart';
 
 // ── Filtros ───────────────────────────────────────────────────────────────────
@@ -44,6 +47,34 @@ final locationPermissionProvider =
 final privacyModeProvider =
     StateProvider<PrivacyMode>((ref) => PrivacyMode.neighborhood);
 
+// ── Posição real do dispositivo ───────────────────────────────────────────────
+
+/// Obtém a posição atual via Fused Location Provider (GPS + WiFi + célula).
+///
+/// Usa [getPositionStream] em vez de [getCurrentPosition] porque o stream
+/// força o sistema a fazer uma medição nova — [getCurrentPosition] pode
+/// retornar uma posição em cache incorreta mesmo com [LocationAccuracy.best].
+///
+/// Só executa quando [locationPermissionProvider] == granted.
+final currentPositionProvider = FutureProvider.autoDispose<Position?>((ref) async {
+  final perm = ref.watch(locationPermissionProvider);
+  if (perm != LocationPermissionStatus.granted) return null;
+
+  final serviceOn = await Geolocator.isLocationServiceEnabled();
+  if (!serviceOn) return null;
+
+  try {
+    return await Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      ),
+    ).first;
+  } catch (_) {
+    return null;
+  }
+});
+
 // ── Nearby users (mock) ───────────────────────────────────────────────────────
 
 final nearbyUsersProvider =
@@ -59,15 +90,89 @@ final nearbyUsersProvider =
       .toList();
 });
 
-// ── Nearby gyms (mock) ────────────────────────────────────────────────────────
+// ── Nearby gyms — Mapbox Search Box API ──────────────────────────────────────
 
+/// Busca academias reais próximas via Mapbox Search Box API.
+///
+/// Usa o mesmo token público (pk.ey...) já configurado no app.
+/// Free tier Mapbox: 100 000 requests/mês — muito mais estável que Overpass.
+/// Categorias buscadas: gym + fitness_center (cobertura ampla no Brasil).
 final nearbyGymsProvider =
     FutureProvider.autoDispose<List<NearbyGym>>((ref) async {
+  final pos = ref.watch(currentPositionProvider).valueOrNull;
   final filters = ref.watch(nearbyFiltersProvider);
-  await Future<void>.delayed(const Duration(milliseconds: 500));
-  return _mockGyms
-      .where((g) => g.distanceMeters <= filters.radiusMeters)
-      .toList();
+
+  if (pos == null) return [];
+
+  final radius = filters.radiusMeters.toInt();
+
+  // Mapbox usa lng,lat (lon primeiro).
+  final proximity = '${pos.longitude},${pos.latitude}';
+
+  final dio = Dio();
+  final gyms = <NearbyGym>[];
+  final seen = <String>{};
+
+  // Busca as duas categorias e funde os resultados.
+  for (final category in ['gym', 'fitness_center']) {
+    try {
+      final response = await dio.get<Map<String, dynamic>>(
+        'https://api.mapbox.com/search/searchbox/v1/category/$category',
+        queryParameters: {
+          'access_token': MapboxConfig.publicToken,
+          'proximity': proximity,
+          'limit': 25,
+          'language': 'pt',
+          'country': 'BR',
+        },
+        options: Options(
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 5),
+        ),
+      );
+
+      final features = (response.data?['features'] as List?) ?? [];
+      for (final f in features) {
+        final coords = f['geometry']?['coordinates'] as List?;
+        if (coords == null || coords.length < 2) continue;
+
+        final lng = (coords[0] as num).toDouble();
+        final lat = (coords[1] as num).toDouble();
+
+        final dist = Geolocator.distanceBetween(
+          pos.latitude, pos.longitude, lat, lng,
+        );
+
+        // Filtra pelo raio escolhido pelo usuário.
+        if (dist > radius) continue;
+
+        final props = (f['properties'] as Map?)?.cast<String, dynamic>() ?? {};
+        final id = (props['mapbox_id'] as String?) ?? '${lat}_$lng';
+
+        // Evita duplicatas entre as duas categorias.
+        if (!seen.add(id)) continue;
+
+        final name = (props['name'] as String?) ?? 'Academia';
+        // full_address tem endereço completo; address tem só a rua.
+        final address = props['full_address'] as String? ??
+            props['address'] as String?;
+
+        gyms.add(NearbyGym(
+          id: id,
+          name: name,
+          address: address,
+          distanceMeters: dist,
+          lat: lat,
+          lng: lng,
+        ));
+      }
+    } catch (_) {
+      // Falha silenciosa — retorna o que já foi encontrado pela outra categoria.
+    }
+  }
+
+  gyms.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+  return gyms;
 });
 
 // ── Mock data ─────────────────────────────────────────────────────────────────

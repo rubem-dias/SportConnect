@@ -47,8 +47,8 @@ dependencies:
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.1
 
-  # Maps
-  flutter_map: ^6.1.0
+  # Maps — Mapbox Maps SDK (vector tiles, cache automático, 50k map loads/mês grátis)
+  mapbox_maps_flutter: ^2.3.0
 
   # Location
   geolocator: ^11.0.0
@@ -72,7 +72,6 @@ dependencies:
   # Utils
   timeago: ^3.6.1
 
-  latlong2: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

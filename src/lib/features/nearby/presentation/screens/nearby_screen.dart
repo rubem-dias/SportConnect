@@ -184,7 +184,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
           indicatorColor: AppColors.primary,
           dividerColor: isDark ? AppColors.borderDark : AppColors.borderLight,
           tabs: const [
-            Tab(text: 'Atletas'),
+            // Tab(text: 'Atletas'),
             Tab(text: 'Academias'),
           ],
         ),
@@ -200,7 +200,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
                 TabBarView(
                   controller: _tabController,
                   children: [
-                    _UsersTab(isDark: isDark),
+                    // _UsersTab(isDark: isDark),
                     _GymsTab(isDark: isDark),
                   ],
                 ),

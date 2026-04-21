@@ -1,17 +1,34 @@
-# SportConnect
+# SportConnect 🏋️
 
-Pasta do projeto Flutter (`src/`).
+> Plataforma de comunidade esportiva — compartilhe treinos, bata PRs, conecte-se com atletas próximos.
 
-## Getting Started
+## Stack
 
-This project is a starting point for a Flutter application.
+- **Mobile:** Flutter 3.x (Dart)
+- **Back-end:** Go (parceiro)
+- **State:** Riverpod
+- **Navegação:** Go Router
+- **Real-time:** WebSocket
+- **Cache:** Hive
 
-A few resources to get you started if this is your first Flutter project:
+## Docs
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- [`SPEC.md`](./SPEC.md) — Especificação completa do produto
+- [`TASKS.md`](./TASKS.md) — Breakdown de tasks por épico
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Setup Rápido
+
+```bash
+# Pré-requisitos: Flutter 3.x, Dart SDK
+flutter pub get
+flutter run --flavor dev
+```
+
+## Estrutura
+
+```
+lib/
+├── core/          # Network, router, theme, utils
+├── features/      # Auth, Feed, PRs, Goals, Chat, Nearby, Profile...
+└── shared/        # Widgets, models, providers reutilizáveis
+```

@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/data/models/user_model.dart';
-import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/data/repositories/user_firestore_repository.dart';
 
 part 'auth_provider.g.dart';
 
@@ -12,48 +13,44 @@ final devBypassAuthProvider = StateProvider<bool>((ref) => false);
 class AuthState extends _$AuthState {
   @override
   Future<UserModel?> build() async {
-    return ref.watch(authRepositoryProvider).getCurrentUser();
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) return null;
+    return ref
+        .read(userFirestoreRepositoryProvider)
+        .getUser(firebaseUser.uid);
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> loginWithFirebaseUser(User firebaseUser) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final result = await ref
-          .read(authRepositoryProvider)
-          .login(email: email, password: password);
-      return result.user;
-    });
+    state = await AsyncValue.guard(
+      () => ref
+          .read(userFirestoreRepositoryProvider)
+          .findOrCreate(firebaseUser),
+    );
   }
 
-  Future<void> register({
-    required String name,
-    required String email,
-    required String password,
+  Future<void> updateProfile({
+    String? username,
+    List<String>? sports,
+    String? level,
+    String? avatar,
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final result = await ref
-          .read(authRepositoryProvider)
-          .register(name: name, email: email, password: password);
-      return result.user;
-    });
-  }
-
-  Future<void> socialLogin({
-    required String provider,
-    required String token,
-  }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final result = await ref
-          .read(authRepositoryProvider)
-          .socialLogin(provider: provider, token: token);
-      return result.user;
-    });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await ref.read(userFirestoreRepositoryProvider).updateProfile(
+          uid,
+          username: username,
+          sports: sports,
+          level: level,
+          avatar: avatar,
+        );
+    state = AsyncData(
+      await ref.read(userFirestoreRepositoryProvider).getUser(uid),
+    );
   }
 
   Future<void> logout() async {
-    await ref.read(authRepositoryProvider).logout();
+    await FirebaseAuth.instance.signOut();
     state = const AsyncData(null);
   }
 }

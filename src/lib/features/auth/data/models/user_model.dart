@@ -14,6 +14,7 @@ class UserModel with _$UserModel {
     String? avatar,
     @Default([]) List<String> sports,
     @Default('beginner') String level,
+    @Default('user') String role,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>

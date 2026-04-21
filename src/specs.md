@@ -179,16 +179,70 @@ Suporte a **Dark Mode e Light Mode** desde o dia 1.
 
 ---
 
+## 5-B. Arquitetura de Autenticação (Firebase-first)
+
+> **Decisão (2025-04):** auth não usa back-end próprio. Toda autenticação e persistência de perfil passa pelo Firebase.
+
+### Fluxo
+
+```
+App → Google Sign-In → Firebase Auth (signInWithCredential)
+                     ↓
+              Firestore users/{uid}
+              findOrCreate → UserModel
+                     ↓
+              authStateProvider (Riverpod)
+```
+
+### Pacotes ativos
+
+| Pacote | Função |
+|---|---|
+| `firebase_core` | inicialização |
+| `firebase_auth` | sessão OAuth |
+| `cloud_firestore` | perfil do usuário |
+| `google_sign_in` | fluxo OAuth Google |
+
+### Coleção Firestore: `users/{uid}`
+
+```
+email        String
+name         String
+avatar       String?
+sports       List<String>   ← salvo no onboarding
+level        String         ← salvo no onboarding
+username     String?        ← salvo no onboarding
+createdAt    String (ISO)
+```
+
+### Regras de segurança (Firestore)
+
+```js
+match /users/{uid} {
+  allow read, write: if request.auth.uid == uid;
+}
+```
+
+### Providers relevantes
+
+- `authStateProvider` — `AsyncNotifier<UserModel?>`, fonte de verdade do usuário logado
+- `userFirestoreRepositoryProvider` — `findOrCreate`, `getUser`, `updateProfile`
+
+### Quando adicionar back-end
+
+Se no futuro precisar de lógica server-side (recomendação, chat escalável, etc.), o fluxo será:  
+Firebase ID Token → `POST /auth/social/google` no back-end → JWT próprio.  
+O `auth_repository_impl.dart` e `AuthRepository` interface já existem preparados para isso.
+
+---
+
 ## 6. Contratos com Back-end (Go)
 
-O back-end será desenvolvido por parceiro em **Go**. Contratos iniciais:
+> **Auth não usa back-end** — ver § 5-B. Os endpoints abaixo são para features futuras.
 
-### Autenticação
+### Autenticação (futuro, se necessário)
 ```
-POST /auth/register
-POST /auth/login
-POST /auth/refresh
-POST /auth/social/{provider}
+POST /auth/social/{provider}   ← recebe Firebase ID Token, retorna JWT próprio
 ```
 
 ### Feed

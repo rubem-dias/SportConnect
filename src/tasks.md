@@ -136,14 +136,17 @@ Adicionar ao `pubspec.yaml`:
 
 ## E02 — Autenticação
 
+> **⚠️ Decisão arquitetural (2025-04):** auth migrado para **Firebase Auth + Firestore**. Não há back-end próprio para autenticação. Google Sign-In é o único provider ativo. E-mail/senha e Apple foram removidos por ora.  
+> Ver detalhes em `specs.md` § 5-B.
+
 ### TASK-008 · Models de autenticação
 **Pontos:** 2  
 **Dependências:** TASK-006
 
 - [x] `UserModel` (id, email, name, avatar, sports, level, createdAt)
-- [x] `AuthTokenModel` (accessToken, refreshToken, expiresAt)
-- [x] `AuthRepository` interface + implementação HTTP
-- [x] Provider `authStateProvider` com `AsyncNotifier<UserModel?>`
+- [x] ~~`AuthTokenModel`~~ — removido; sessão gerenciada pelo Firebase Auth
+- [x] `UserFirestoreRepository` — cria/lê perfil em `users/{uid}` no Firestore
+- [x] Provider `authStateProvider` — fonte de verdade: `FirebaseAuth.instance.currentUser` + Firestore
 
 **Aceite:** Models gerados pelo `freezed` sem warnings
 
@@ -153,16 +156,13 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-008, TASK-004
 
-- [x] Layout: logo centralizado, campos e-mail + senha, botão entrar
-- [x] Botões de social login (Google, Apple) — visual apenas nesta task
-- [x] Link "Esqueci minha senha"
-- [x] Link "Criar conta"
-- [x] Validação local dos campos antes do request
-- [x] Loading state no botão durante request
-- [x] Tratamento de erros (credenciais inválidas, sem conexão)
-- [x] Navegação pós-login para Home
+- [x] Layout: logo centralizado + botão "Entrar com Google"
+- [x] ~~Campos e-mail + senha~~ — removidos (auth é só Google por ora)
+- [x] Loading state no botão durante o fluxo OAuth
+- [x] Tratamento de erros (Google cancelado, Firebase falha)
+- [x] Navegação pós-login: onboarding se perfil incompleto, chat se completo
 
-**Aceite:** Login com credenciais válidas navega para Home; erro exibe snackbar correto
+**Aceite:** Tap em "Entrar com Google" abre OAuth, autentica e navega corretamente
 
 ---
 
@@ -170,42 +170,37 @@ Adicionar ao `pubspec.yaml`:
 **Pontos:** 5  
 **Dependências:** TASK-008, TASK-004
 
-- [x] Step 1: Nome, e-mail, senha, confirmação de senha
-- [x] Step 2: Foto de perfil (opcional), username
-- [x] Validações: e-mail único (check assíncrono), senha forte, username disponível
-- [x] Progress indicator de steps
-- [x] Navegar para Onboarding após registro
-
-**Aceite:** Registro completo cria usuário no back-end e persiste token
+> **Suspensa** — cadastro é feito implicitamente no primeiro login Google (`findOrCreate` no Firestore). Tela de registro com e-mail/senha não é necessária enquanto Firebase Auth for o único provider.
 
 ---
 
 ### TASK-011 · Onboarding
 **Pontos:** 5  
-**Dependências:** TASK-010
+**Dependências:** TASK-009
 
 - [x] Step 1: Selecionar esportes de interesse (multi-select com ícones)
 - [x] Step 2: Nível de condicionamento (Iniciante / Intermediário / Avançado)
 - [x] Step 3: Objetivo principal (Hipertrofia, Emagrecimento, Performance, Saúde)
 - [x] Step 4: Localização (para Nearby) — opt-in com explicação clara
 - [x] Skip possível em cada step
-- [x] Salvar preferências no perfil
+- [x] Salvar preferências via `authStateProvider.updateProfile()` → Firestore
 
-**Aceite:** Onboarding completo persiste preferências e navega para Home
+**Aceite:** Onboarding completo persiste preferências no Firestore e navega para Home
 
 ---
 
-### TASK-012 · Social Login (Google e Apple)
+### TASK-012 · Social Login (Google)
 **Pontos:** 5  
 **Dependências:** TASK-009
 
 - [x] Integrar `google_sign_in` package
-- [x] Integrar `sign_in_with_apple` package
-- [x] Enviar token social para `POST /auth/social/{provider}`
-- [x] Tratar conta já existente vs novo usuário (onboarding condicional)
-- [ ] Configurar OAuth apps no Google Cloud Console e Apple Developer
+- [x] Integrar `firebase_auth` — `signInWithCredential(GoogleAuthProvider.credential(...))`
+- [x] `findOrCreate` no Firestore após autenticação Firebase
+- [x] Tratar conta já existente vs novo usuário (onboarding condicional via `sports.isEmpty`)
+- [x] SHA-1 do debug keystore cadastrado no Firebase Console
+- [ ] Configurar SHA-1 do release keystore quando gerar build de produção
 
-**Aceite:** Login Google e Apple funciona em device físico iOS e Android
+**Aceite:** Login Google funciona em device físico Android; sessão persiste entre aberturas
 
 ---
 

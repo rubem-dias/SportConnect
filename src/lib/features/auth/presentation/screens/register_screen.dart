@@ -211,11 +211,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    await ref.read(authStateProvider.notifier).register(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+    if (!mounted) return;
+    context.go(AppRoutes.login);
   }
 
   @override

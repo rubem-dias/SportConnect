@@ -58,7 +58,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
 
   Future<void> _requestLocationPermission() async {
     // Verifica se já foi concedida (ex: segundo launch do app).
-    var existing = await geo.Geolocator.checkPermission();
+    final existing = await geo.Geolocator.checkPermission();
     if (existing == geo.LocationPermission.always ||
         existing == geo.LocationPermission.whileInUse) {
       if (mounted) {
@@ -196,7 +196,7 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen>
               // O MapboxMap nunca é descartado → zero reinicializações desnecessárias.
               index: _showMap ? 0 : 1,
               children: [
-                _NearbyMapView(key: const ValueKey('nearby_mapbox_map')),
+                const _NearbyMapView(key: ValueKey('nearby_mapbox_map')),
                 TabBarView(
                   controller: _tabController,
                   children: [
@@ -374,6 +374,7 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
   /// Mapeia annotation.id → NearbyGym para identificar o tap correto.
   final Map<String, NearbyGym> _gymById = {};
 
+
   /// Imagens dos pins renderizadas via Canvas uma única vez e reutilizadas
   /// em todas as anotações do mesmo tipo.
   Uint8List? _myPin;
@@ -492,7 +493,7 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
 
   // ── Callbacks do mapa ─────────────────────────────────────────────────────
 
-  void _onMapCreated(MapboxMap map) async {
+  Future<void> _onMapCreated(MapboxMap map) async {
     _mapboxMap = map;
 
     // Desativa rotação e inclinação — não usados no Nearby e evitam
@@ -511,7 +512,7 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
   /// Annotation managers exigem que o estilo esteja pronto — criá-los em
   /// [_onMapCreated] pode falhar silenciosamente se o estilo ainda estava
   /// carregando (o callback é async void, então a exceção é descartada).
-  void _onStyleLoaded(StyleLoadedEventData _) async {
+  Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
     final map = _mapboxMap;
     if (map == null) return;
 
@@ -522,13 +523,14 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
     _userManager =
         await map.annotations.createPointAnnotationManager(id: 'sc_users');
 
-    // Listeners de tap via implementação dedicada (exigência da API do SDK).
+    // ignore: deprecated_member_use
     _userManager!.addOnPointAnnotationClickListener(
       _AnnotationClickListener<NearbyUser>(
         dataById: _userById,
         onTap: _showUserSheet,
       ),
     );
+    // ignore: deprecated_member_use
     _gymManager!.addOnPointAnnotationClickListener(
       _AnnotationClickListener<NearbyGym>(
         dataById: _gymById,
@@ -556,7 +558,9 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
     final userPin = _userPin;
     final gymPin = _gymPin;
     if (userMgr == null || gymMgr == null ||
-        myPin == null || userPin == null || gymPin == null) return;
+        myPin == null || userPin == null || gymPin == null) {
+      return;
+    }
 
     final users = ref.read(nearbyUsersProvider).valueOrNull ?? [];
     final gyms = ref.read(nearbyGymsProvider).valueOrNull ?? [];
@@ -590,8 +594,8 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
                   textField: u.name,
                   textSize: 11.0,
                   textOffset: [0.0, 2.2],
-                  textColor: Colors.black.value,
-                  textHaloColor: Colors.white.value,
+                  textColor: Colors.black.toARGB32(),
+                  textHaloColor: Colors.white.toARGB32(),
                   textHaloWidth: 1.5,
                 ))
             .toList(),
@@ -615,8 +619,8 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
                   textField: g.name,
                   textSize: 11.0,
                   textOffset: [0.0, 2.2],
-                  textColor: Colors.black.value,
-                  textHaloColor: Colors.white.value,
+                  textColor: Colors.black.toARGB32(),
+                  textHaloColor: Colors.white.toARGB32(),
                   textHaloWidth: 1.5,
                 ))
             .toList(),
@@ -693,10 +697,7 @@ class _NearbyMapViewState extends ConsumerState<_NearbyMapView> {
 
 // ── Listener de tap nas annotations ──────────────────────────────────────────
 
-/// Implementação genérica de [OnPointAnnotationClickListener].
-///
-/// Necessário como classe separada pois o SDK exige um objeto que implemente
-/// a interface — closures não são aceitas diretamente.
+// ignore: deprecated_member_use
 class _AnnotationClickListener<T> implements OnPointAnnotationClickListener {
   const _AnnotationClickListener({
     required this.dataById,
@@ -710,144 +711,7 @@ class _AnnotationClickListener<T> implements OnPointAnnotationClickListener {
   bool onPointAnnotationClick(PointAnnotation annotation) {
     final data = dataById[annotation.id];
     if (data != null) onTap(data);
-    // true = evento consumido, não propaga para o mapa
     return true;
-  }
-}
-
-// ── Tab de Atletas ────────────────────────────────────────────────────────────
-
-class _UsersTab extends ConsumerWidget {
-  const _UsersTab({required this.isDark});
-
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final usersAsync = ref.watch(nearbyUsersProvider);
-
-    return usersAsync.when(
-      loading: () => _NearbyListSkeleton(isDark: isDark),
-      error: (_, __) =>
-          const Center(child: Text('Erro ao carregar usuários')),
-      data: (users) {
-        if (users.isEmpty) {
-          return AppEmptyState(
-            icon: Icons.people_outline_rounded,
-            title: 'Ninguém por aqui',
-            subtitle: 'Aumente o raio de busca ou volte mais tarde',
-            actionLabel: 'Ajustar filtros',
-            onAction: () {},
-          );
-        }
-
-        return RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: () => ref.refresh(nearbyUsersProvider.future),
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            itemCount: users.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 1,
-              indent: 72,
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-            ),
-            itemBuilder: (_, i) => _UserTile(user: users[i], isDark: isDark),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _UserTile extends StatelessWidget {
-  const _UserTile({required this.user, required this.isDark});
-
-  final NearbyUser user;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: AppColors.primary.withAlpha(40),
-            backgroundImage:
-                user.avatar != null ? NetworkImage(user.avatar!) : null,
-            child: user.avatar == null
-                ? const Icon(Icons.person_rounded, color: AppColors.primary)
-                : null,
-          ),
-          if (user.isOnline)
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: AppColors.online,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.backgroundDark
-                        : AppColors.backgroundLight,
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-      title: Text(user.name,
-          style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            user.username,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Wrap(
-            spacing: 4,
-            children: user.sports
-                .take(2)
-                .map((s) => AppBadge(label: s, isSmall: true))
-                .toList(),
-          ),
-        ],
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            user.distanceLabel,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'de distância',
-            style: TextStyle(fontSize: 10, color: AppColors.textSecondaryLight),
-          ),
-        ],
-      ),
-      onTap: () => showModalBottomSheet<void>(
-        context: context,
-        builder: (_) => _UserBottomSheet(user: user),
-      ),
-    );
   }
 }
 

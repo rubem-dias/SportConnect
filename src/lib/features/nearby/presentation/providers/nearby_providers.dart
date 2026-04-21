@@ -67,7 +67,6 @@ final currentPositionProvider = FutureProvider.autoDispose<Position?>((ref) asyn
     return await Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 0,
       ),
     ).first;
   } catch (_) {
@@ -131,9 +130,10 @@ final nearbyGymsProvider =
         ),
       );
 
-      final features = (response.data?['features'] as List?) ?? [];
-      for (final f in features) {
-        final coords = f['geometry']?['coordinates'] as List?;
+      final features = (response.data?['features'] as List<dynamic>?) ?? [];
+      for (final f in features.cast<Map<String, dynamic>>()) {
+        final geometry = f['geometry'] as Map<String, dynamic>?;
+        final coords = geometry?['coordinates'] as List?;
         if (coords == null || coords.length < 2) continue;
 
         final lng = (coords[0] as num).toDouble();
@@ -143,10 +143,9 @@ final nearbyGymsProvider =
           pos.latitude, pos.longitude, lat, lng,
         );
 
-        // Filtra pelo raio escolhido pelo usuário.
         if (dist > radius) continue;
 
-        final props = (f['properties'] as Map?)?.cast<String, dynamic>() ?? {};
+        final props = (f['properties'] as Map<String, dynamic>?) ?? {};
         final id = (props['mapbox_id'] as String?) ?? '${lat}_$lng';
 
         // Evita duplicatas entre as duas categorias.
@@ -237,35 +236,3 @@ const _mockUsers = [
   ),
 ];
 
-const _mockGyms = [
-  NearbyGym(
-    id: 'g1',
-    name: 'Academia Smart Fit',
-    address: 'Av. Paulista, 1000',
-    distanceMeters: 450,
-    rating: 4.2,
-    isOpen: true,
-    lat: _baseLat - 0.0020,
-    lng: _baseLng + 0.0036,
-  ),
-  NearbyGym(
-    id: 'g2',
-    name: 'CrossFit Zone',
-    address: 'Rua Augusta, 200',
-    distanceMeters: 870,
-    rating: 4.8,
-    isOpen: true,
-    lat: _baseLat + 0.0050,
-    lng: _baseLng + 0.0070,
-  ),
-  NearbyGym(
-    id: 'g3',
-    name: 'Body Tech',
-    address: 'Al. Santos, 500',
-    distanceMeters: 1200,
-    rating: 4.0,
-    isOpen: false,
-    lat: _baseLat - 0.0075,
-    lng: _baseLng - 0.0080,
-  ),
-];

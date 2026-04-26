@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -89,8 +88,7 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // getIdToken() renova automaticamente quando expira (a cada 1h)
-    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    final token = await _storage.read(key: _kAccessTokenKey);
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -105,19 +103,40 @@ class _AuthInterceptor extends Interceptor {
     if (err.response?.statusCode == 401 && !_isRefreshing) {
       _isRefreshing = true;
       try {
-        // Força renovação do token e tenta novamente
-        final token = await FirebaseAuth.instance.currentUser
-            ?.getIdToken(true); // true = força refresh
-        if (token == null) {
+        final refreshToken = await _storage.read(key: _kRefreshTokenKey);
+        if (refreshToken == null) {
           _isRefreshing = false;
           return handler.reject(err);
         }
-        err.requestOptions.headers['Authorization'] = 'Bearer $token';
+
+        final response = await _dio.post<Map<String, dynamic>>(
+          ApiEndpoints.authRefresh,
+          data: {'refreshToken': refreshToken},
+        );
+
+        final newAccessToken =
+            response.data?['accessToken'] as String?;
+        final newRefreshToken =
+            response.data?['refreshToken'] as String?;
+
+        if (newAccessToken == null) {
+          _isRefreshing = false;
+          return handler.reject(err);
+        }
+
+        await _storage.write(key: _kAccessTokenKey, value: newAccessToken);
+        if (newRefreshToken != null) {
+          await _storage.write(key: _kRefreshTokenKey, value: newRefreshToken);
+        }
+
+        // Retry original request with new token
+        err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
         final retryResponse = await _dio.fetch<dynamic>(err.requestOptions);
         _isRefreshing = false;
         return handler.resolve(retryResponse);
       } on DioException catch (_) {
         _isRefreshing = false;
+        await _storage.deleteAll();
         return handler.reject(err);
       }
     }

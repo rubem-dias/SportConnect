@@ -183,7 +183,7 @@ Suporte a **Dark Mode e Light Mode** desde o dia 1.
 
 > **Decisão (2025-04):** auth não usa back-end próprio. Toda autenticação e persistência de perfil passa pelo Firebase.
 
-### Fluxo atual (sem back-end)
+### Fluxo
 
 ```
 App → Google Sign-In → Firebase Auth (signInWithCredential)
@@ -194,243 +194,89 @@ App → Google Sign-In → Firebase Auth (signInWithCredential)
               authStateProvider (Riverpod)
 ```
 
+### Pacotes ativos
+
+| Pacote | Função |
+|---|---|
+| `firebase_core` | inicialização |
+| `firebase_auth` | sessão OAuth |
+| `cloud_firestore` | perfil do usuário |
+| `google_sign_in` | fluxo OAuth Google |
+
 ### Coleção Firestore: `users/{uid}`
 
-| Campo | Tipo | Observação |
-|---|---|---|
-| `email` | String | |
-| `name` | String | |
-| `avatar` | String? | URL da foto |
-| `username` | String? | salvo no onboarding |
-| `sports` | List\<String\> | salvo no onboarding |
-| `level` | String | `beginner` / `intermediate` / `advanced` |
-| `role` | String | `user` / `admin` / `moderator` |
-| `createdAt` | String (ISO 8601) | |
+```
+email        String
+name         String
+avatar       String?
+sports       List<String>   ← salvo no onboarding
+level        String         ← salvo no onboarding
+username     String?        ← salvo no onboarding
+createdAt    String (ISO)
+```
+
+### Regras de segurança (Firestore)
+
+```js
+match /users/{uid} {
+  allow read, write: if request.auth.uid == uid;
+}
+```
+
+### Providers relevantes
+
+- `authStateProvider` — `AsyncNotifier<UserModel?>`, fonte de verdade do usuário logado
+- `userFirestoreRepositoryProvider` — `findOrCreate`, `getUser`, `updateProfile`
 
 ### Quando adicionar back-end
 
+Se no futuro precisar de lógica server-side (recomendação, chat escalável, etc.), o fluxo será:  
 Firebase ID Token → `POST /auth/social/google` no back-end → JWT próprio.  
 O `auth_repository_impl.dart` e `AuthRepository` interface já existem preparados para isso.
 
 ---
 
-## 6. Contratos com Back-end
+## 6. Contratos com Back-end (Go)
 
-> **Para o parceiro de back-end:** este documento descreve tudo que o app Flutter espera receber. Auth usa Firebase — ver § 5-B. Os endpoints abaixo cobrem as features que exigem lógica server-side.
+> **Auth não usa back-end** — ver § 5-B. Os endpoints abaixo são para features futuras.
 
----
-
-### Convenções gerais
-
-| Item | Detalhe |
-|---|---|
-| **Base URL** | `https://api.sportconnect.app/api` |
-| **Formato** | REST + JSON |
-| **Autenticação** | `Authorization: Bearer <firebase_id_token>` em todos os endpoints protegidos |
-| **Verificação do token** | Firebase Admin SDK — `admin.auth().verifyIdToken(token)` — retorna `uid`, `email` |
-| **Paginação** | cursor-based: `?cursor=<id>&limit=20` |
-| **Erros** | `{ "error": "mensagem" }` com HTTP status adequado |
-
----
-
-### Prioridade de implementação
-
-| Fase | Feature | Motivo |
-|---|---|---|
-| **P0** | Auth + perfil de usuário | Base de tudo |
-| **P0** | Chat (DM) | Tela inicial do app |
-| **P1** | Nearby users | Segunda aba |
-| **P1** | PRs | Feature de retenção |
-| **P2** | Feed | Pausado no MVP atual |
-| **P2** | Eventos | Placeholder no app |
-
----
-
-### Auth
-
-O back-end **não** gerencia login OAuth — isso é responsabilidade do Firebase. O back-end só precisa verificar o Firebase ID Token e emitir seus próprios tokens para chamadas subsequentes.
-
+### Autenticação (futuro, se necessário)
 ```
-POST /auth/social/google
+POST /auth/social/{provider}   ← recebe Firebase ID Token, retorna JWT próprio
 ```
 
-**Request:**
-```json
-{ "token": "<firebase_id_token>" }
+### Feed
+```
+GET  /feed?page=&limit=
+POST /posts
+POST /posts/{id}/reaction
+POST /posts/{id}/comments
 ```
 
-**Response `200`:**
-```json
-{
-  "user": {
-    "id": "string",
-    "email": "string",
-    "name": "string",
-    "avatar": "string | null",
-    "username": "string | null",
-    "sports": ["string"],
-    "level": "beginner | intermediate | advanced",
-    "role": "user | admin | moderator",
-    "createdAt": "2025-04-01T00:00:00Z"
-  },
-  "tokens": {
-    "accessToken": "string",
-    "refreshToken": "string"
-  }
-}
+### PRs
 ```
-
+GET  /prs?userId=
+POST /prs
+GET  /prs/{exerciseId}/history
 ```
-POST /auth/refresh
-```
-**Request:** `{ "refreshToken": "string" }`  
-**Response:** `{ "accessToken": "string", "refreshToken": "string" }`
-
----
-
-### Usuários
-
-```
-GET  /users/me                    → perfil do usuário autenticado
-PUT  /users/me                    → atualizar perfil (name, username, avatar, sports, level)
-GET  /users/:id                   → perfil público de outro usuário
-```
-
-**Modelo `UserModel` (usado em todas as respostas com usuário):**
-```json
-{
-  "id": "string",
-  "email": "string",
-  "name": "string",
-  "avatar": "string | null",
-  "username": "string | null",
-  "sports": ["string"],
-  "level": "beginner | intermediate | advanced",
-  "role": "user | admin | moderator",
-  "createdAt": "ISO 8601"
-}
-```
-
----
 
 ### Chat
-
-Real-time via **WebSocket**. REST apenas para histórico e listagem.
-
 ```
-GET  /conversations                         → lista de conversas do usuário
-GET  /conversations/:id/messages?cursor=    → histórico paginado
-POST /conversations/:id/messages            → enviar mensagem (fallback sem WS)
-POST /conversations                         → criar nova conversa (DM ou grupo)
+WebSocket: /ws/chat
+GET  /conversations
+GET  /conversations/{id}/messages
+POST /conversations/{id}/messages
 ```
-
-**WebSocket:** `wss://api.sportconnect.app/ws/chat`  
-Header de conexão: `Authorization: Bearer <accessToken>`
-
-**Eventos do servidor → cliente:**
-```json
-{ "type": "message", "conversationId": "string", "message": { ... } }
-{ "type": "typing",  "conversationId": "string", "userId": "string" }
-{ "type": "read",    "conversationId": "string", "userId": "string", "messageId": "string" }
-```
-
-**Eventos do cliente → servidor:**
-```json
-{ "type": "send",   "conversationId": "string", "content": "string", "mediaUrl": "string | null" }
-{ "type": "typing", "conversationId": "string" }
-{ "type": "read",   "conversationId": "string", "messageId": "string" }
-```
-
-**Modelo `MessageModel`:**
-```json
-{
-  "id": "string",
-  "conversationId": "string",
-  "senderId": "string",
-  "content": "string",
-  "mediaUrl": "string | null",
-  "createdAt": "ISO 8601",
-  "readBy": ["userId"]
-}
-```
-
----
 
 ### Nearby
-
 ```
-GET /nearby/users?lat=&lng=&radius=&sport=&level=
-GET /nearby/gyms?lat=&lng=&radius=
-```
-
-**Response `nearby/users`:**
-```json
-{
-  "users": [
-    {
-      "userId": "string",
-      "name": "string",
-      "username": "string",
-      "avatar": "string | null",
-      "sports": ["string"],
-      "level": "string",
-      "distanceMeters": 320,
-      "isOnline": true,
-      "lat": -23.56,
-      "lng": -46.65
-    }
-  ]
-}
+GET  /nearby/users?lat=&lng=&radius=
+GET  /nearby/gyms?lat=&lng=&radius=
 ```
 
-> **Privacidade:** quando o usuário está em modo "Bairro", o back-end deve retornar coordenadas aproximadas (±500m), nunca a posição exata.
-
----
-
-### PRs (Personal Records)
-
-```
-GET  /prs?userId=                       → PRs de um usuário
-POST /prs                               → registrar novo PR
-GET  /prs/:exerciseId/history           → histórico de um exercício
-```
-
-**Modelo `PRModel`:**
-```json
-{
-  "id": "string",
-  "userId": "string",
-  "exerciseId": "string",
-  "exerciseName": "string",
-  "weightKg": 100.0,
-  "reps": 5,
-  "date": "ISO 8601",
-  "isPersonalRecord": true
-}
-```
-
----
-
-### Feed (P2 — pausado no app atual)
-
-```
-GET  /feed?cursor=&limit=
-POST /posts
-POST /posts/:id/reaction
-GET  /posts/:id/comments
-POST /posts/:id/comments
-```
-
----
-
-### Notificações
-
-```
-POST /notifications/token       → registrar FCM token do dispositivo
-DELETE /notifications/token     → remover token (logout)
-```
-
-**Request:** `{ "fcmToken": "string", "platform": "android | ios" }`
+> **Formato:** REST JSON + WebSocket para real-time  
+> **Auth:** Bearer JWT (access + refresh token)  
+> **Paginação:** cursor-based preferencial
 
 ---
 

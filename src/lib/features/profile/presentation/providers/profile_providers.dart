@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/mock/mock_profile_repository.dart';
+import '../../../../shared/providers/global_error_provider.dart';
 import '../../../feed/data/models/post_model.dart';
 import '../../../prs/data/models/pr_model.dart';
 import '../../data/models/user_profile_model.dart';
@@ -35,7 +35,8 @@ class ProfileNotifier
       final updated =
           await ref.read(profileRepositoryProvider).followUser(arg);
       state = AsyncData(updated);
-    } catch (_) {
+    } catch (e) {
+      ref.pushError(e);
       state = AsyncData(current); // rollback
     }
   }
@@ -53,8 +54,9 @@ class ProfileNotifier
       final updated =
           await ref.read(profileRepositoryProvider).unfollowUser(arg);
       state = AsyncData(updated);
-    } catch (_) {
-      state = AsyncData(current);
+    } catch (e) {
+      ref.pushError(e);
+      state = AsyncData(current); // rollback
     }
   }
 
@@ -65,18 +67,28 @@ class ProfileNotifier
     List<String>? sports,
     String? level,
   }) async {
-    final updated = await ref.read(profileRepositoryProvider).updateProfile(
-          name: name,
-          bio: bio,
-          avatar: avatar,
-          sports: sports,
-          level: level,
-        );
-    state = AsyncData(updated);
+    try {
+      final updated = await ref.read(profileRepositoryProvider).updateProfile(
+            name: name,
+            bio: bio,
+            avatar: avatar,
+            sports: sports,
+            level: level,
+          );
+      state = AsyncData(updated);
+    } catch (e) {
+      ref.pushError(e);
+      rethrow;
+    }
   }
 
   Future<void> blockUser() async {
-    await ref.read(profileRepositoryProvider).blockUser(arg);
+    try {
+      await ref.read(profileRepositoryProvider).blockUser(arg);
+    } catch (e) {
+      ref.pushError(e);
+      rethrow;
+    }
   }
 }
 

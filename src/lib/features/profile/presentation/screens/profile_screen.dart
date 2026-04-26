@@ -155,7 +155,13 @@ class _ProfileSliverHeader extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.qr_code_rounded),
             tooltip: 'Meu QR Code',
-            onPressed: () => _showQrSheet(context, profile.username),
+            onPressed: () {
+              try {
+                _showQrSheet(context, profile.username);
+              } catch (e) {
+                AppSnackbar.error(context, 'Erro ao abrir QR Code');
+              }
+            },
           ),
           _NotificationsBell(
             onTap: () => context.push(AppRoutes.notifications),
@@ -166,10 +172,14 @@ class _ProfileSliverHeader extends ConsumerWidget {
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: (value) async {
               if (value == 'block') {
-                await ref
-                    .read(profileProvider(profileId).notifier)
-                    .blockUser();
-                if (context.mounted) context.pop();
+                try {
+                  await ref
+                      .read(profileProvider(profileId).notifier)
+                      .blockUser();
+                  if (context.mounted) context.pop();
+                } catch (_) {
+                  // error already shown via globalErrorProvider
+                }
               }
             },
             itemBuilder: (_) => const [
@@ -473,6 +483,12 @@ class _PRsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(userPRsProvider(userId), (_, next) {
+      if (next is AsyncError && context.mounted) {
+        AppSnackbar.error(context, 'Erro ao carregar PRs');
+      }
+    });
+
     final prsAsync = ref.watch(userPRsProvider(userId));
 
     return prsAsync.when(
@@ -791,7 +807,13 @@ class _SettingsSection extends StatelessWidget {
           icon: Icons.qr_code_rounded,
           label: 'Meu QR Code',
           isDark: isDark,
-          onTap: () => _showQrSheet(context, profile.username),
+          onTap: () {
+            try {
+              _showQrSheet(context, profile.username);
+            } catch (e) {
+              AppSnackbar.error(context, 'Erro ao abrir QR Code');
+            }
+          },
         ),
       ],
     );
@@ -1063,6 +1085,11 @@ class _Divider extends StatelessWidget {
 // ── QR Code sheet ─────────────────────────────────────────────────────────────
 
 void _showQrSheet(BuildContext context, String username) {
+  if (username.isEmpty) {
+    AppSnackbar.error(context, 'Username não disponível');
+    return;
+  }
+
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final handle = username.startsWith('@') ? username : '@$username';
   final qrData = 'sportconnect://u/$handle';
@@ -1070,138 +1097,176 @@ void _showQrSheet(BuildContext context, String username) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.xl,
-        AppSpacing.xxxl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-              borderRadius: BorderRadius.circular(2),
-            ),
+    // builder recebe o sheetContext para SafeArea e viewPadding corretos
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'Meu QR Code',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.lg,
+            AppSpacing.xl,
+            AppSpacing.xl,
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: QrImageView(
-              data: qrData,
-              size: 220,
-              eyeStyle: const QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: Color(0xFF5C6BC0),
-              ),
-              dataModuleStyle: const QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: Color(0xFF1A1A2E),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            handle,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Aponte a câmera para adicionar no SportConnect',
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              OutlinedButton.icon(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: handle));
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Username copiado!'),
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 2),
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                'Meu QR Code',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.copy_rounded, size: 18),
-                label: const Text('Copiar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  ],
+                ),
+                child: QrImageView(
+                  data: qrData,
+                  size: 220,
+                  errorStateBuilder: (_, error) => SizedBox(
+                    width: 220,
+                    height: 220,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.qr_code_2_rounded,
+                              size: 48, color: AppColors.textDisabledLight),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Erro ao gerar QR Code',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.sm,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: Color(0xFF5C6BC0),
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: Color(0xFF1A1A2E),
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              ElevatedButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.share_rounded, size: 18),
-                label: const Text('Compartilhar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.sm,
-                  ),
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                handle,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                  letterSpacing: 0.5,
                 ),
               ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Aponte a câmera para adicionar no SportConnect',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(sheetContext);
+                        try {
+                          await Clipboard.setData(
+                              ClipboardData(text: handle));
+                          if (context.mounted) {
+                            AppSnackbar.success(context, 'Username copiado!');
+                          }
+                        } catch (_) {
+                          if (context.mounted) {
+                            AppSnackbar.error(
+                                context, 'Erro ao copiar username');
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 18),
+                      label: const Text('Copiar'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.share_rounded, size: 18),
+                      label: const Text('Compartilhar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
             ],
           ),
-        ],
+        ),
       ),
     ),
   );

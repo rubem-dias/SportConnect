@@ -113,14 +113,14 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
 
     setState(() => _isSaving = true);
     try {
-      // In a real app, _pickedImage would be uploaded to storage and the URL passed here.
-      // For mock purposes, we pass the local path as the avatar value.
       await ref.read(profileProvider(widget.profileId).notifier).updateProfile(
             name: name,
             bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
             avatar: _pickedImage?.path,
           );
       if (mounted) Navigator.pop(context);
+    } catch (_) {
+      // error already shown via globalErrorProvider — sheet stays open
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

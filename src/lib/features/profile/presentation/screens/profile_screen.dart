@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -653,21 +655,118 @@ class _BadgesSection extends StatelessWidget {
       ),
       children: [
         SizedBox(
-          height: 96,
+          height: 104,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
             scrollDirection: Axis.horizontal,
             itemCount: sorted.length,
-            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-            itemBuilder: (context, i) =>
-                _BadgeChip(badge: sorted[i], isDark: isDark, onTap: () => _showBadgeInfo(context, sorted[i])),
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
+            itemBuilder: (context, i) => _BadgeChip(
+              badge: sorted[i],
+              isDark: isDark,
+              onTap: () => _showBadgeInfo(context, sorted[i]),
+            ),
           ),
         ),
       ],
     );
   }
 }
+
+// ── Hex badge painter ─────────────────────────────────────────────────────────
+
+class _HexBadgePainter extends CustomPainter {
+  _HexBadgePainter({required this.colors, required this.isUnlocked});
+
+  final List<Color> colors;
+  final bool isUnlocked;
+
+  Path _hexPath(Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2;
+    final path = Path();
+    for (var i = 0; i < 6; i++) {
+      final angle = (math.pi / 3) * i - math.pi / 2;
+      final x = cx + r * math.cos(angle);
+      final y = cy + r * math.sin(angle);
+      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+    }
+    return path..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = _hexPath(size);
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    final effectiveColors = isUnlocked
+        ? colors
+        : [const Color(0xFF757575), const Color(0xFF424242)];
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: effectiveColors,
+      ).createShader(rect)
+      ..style = PaintingStyle.fill;
+
+    if (isUnlocked) {
+      canvas.drawShadow(path, effectiveColors.last.withAlpha(120), 6, false);
+    }
+    canvas.drawPath(path, fillPaint);
+
+    // Inner highlight edge
+    final strokePaint = Paint()
+      ..color = Colors.white.withAlpha(isUnlocked ? 50 : 20)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(_HexBadgePainter old) =>
+      old.isUnlocked != isUnlocked || old.colors != colors;
+}
+
+class _HexBadge extends StatelessWidget {
+  const _HexBadge({
+    required this.badge,
+    required this.size,
+  });
+
+  final BadgeModel badge;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: badge.isUnlocked ? 1.0 : 0.38,
+      duration: const Duration(milliseconds: 300),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: _HexBadgePainter(
+            colors: badge.colors,
+            isUnlocked: badge.isUnlocked,
+          ),
+          child: Center(
+            child: Icon(
+              badge.icon,
+              color: Colors.white,
+              size: size * 0.44,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Badge chip (used in the horizontal list) ──────────────────────────────────
 
 class _BadgeChip extends StatelessWidget {
   const _BadgeChip(
@@ -681,49 +780,31 @@ class _BadgeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedOpacity(
-        opacity: badge.isUnlocked ? 1 : 0.35,
-        duration: const Duration(milliseconds: 300),
-        child: Container(
-          width: 72,
-          decoration: BoxDecoration(
-            color: badge.isUnlocked
-                ? AppColors.primary.withAlpha(20)
-                : (isDark
-                    ? AppColors.surfaceVariantDark
-                    : AppColors.surfaceVariantLight),
-            borderRadius: BorderRadius.circular(12),
-            border: badge.isUnlocked
-                ? Border.all(color: AppColors.primary.withAlpha(80))
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(badge.emoji, style: const TextStyle(fontSize: 26)),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  badge.title,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: badge.isUnlocked
-                        ? (isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight)
-                        : (isDark
-                            ? AppColors.textDisabledDark
-                            : AppColors.textDisabledLight),
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      child: SizedBox(
+        width: 68,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _HexBadge(badge: badge, size: 52),
+            const SizedBox(height: 5),
+            Text(
+              badge.title,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: badge.isUnlocked
+                    ? (isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight)
+                    : (isDark
+                        ? AppColors.textDisabledDark
+                        : AppColors.textDisabledLight),
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
@@ -736,7 +817,7 @@ void _showBadgeInfo(BuildContext context, BadgeModel badge) {
     builder: (_) => AlertDialog(
       title: Row(
         children: [
-          Text(badge.emoji, style: const TextStyle(fontSize: 28)),
+          _HexBadge(badge: badge, size: 40),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(badge.title)),
         ],

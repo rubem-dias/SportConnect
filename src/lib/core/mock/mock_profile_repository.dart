@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../features/feed/data/models/post_model.dart';
 import '../../features/profile/data/models/user_profile_model.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -261,7 +263,8 @@ class MockProfileRepository implements ProfileRepository {
     return [
       BadgeModel(
         id: 'first_pr',
-        emoji: '🏆',
+        icon: Icons.emoji_events_rounded,
+        colors: const [Color(0xFFFFD700), Color(0xFFFF8C00)],
         title: 'Primeiro PR',
         description: 'Registrou seu primeiro personal record',
         isUnlocked: true,
@@ -269,7 +272,8 @@ class MockProfileRepository implements ProfileRepository {
       ),
       BadgeModel(
         id: 'week_streak',
-        emoji: '🔥',
+        icon: Icons.local_fire_department_rounded,
+        colors: const [Color(0xFFFF6B35), Color(0xFFE53935)],
         title: 'Semana Intensa',
         description: 'Treinou 5 dias seguidos',
         isUnlocked: true,
@@ -277,7 +281,8 @@ class MockProfileRepository implements ProfileRepository {
       ),
       BadgeModel(
         id: 'social_butterfly',
-        emoji: '🦋',
+        icon: Icons.people_alt_rounded,
+        colors: const [Color(0xFF7C4DFF), Color(0xFF448AFF)],
         title: 'Sociável',
         description: 'Seguiu 50 pessoas',
         isUnlocked: isMe,
@@ -285,22 +290,25 @@ class MockProfileRepository implements ProfileRepository {
       ),
       BadgeModel(
         id: 'century',
-        emoji: '💯',
+        icon: Icons.fitness_center_rounded,
+        colors: const [Color(0xFF26C6DA), Color(0xFF1565C0)],
         title: 'Centenário',
         description: 'Acumulou 100kg no supino',
         isUnlocked: true,
         unlockedAt: DateTime(2024, 6, 20),
       ),
-      const BadgeModel(
+      BadgeModel(
         id: 'marathon',
-        emoji: '🏃',
+        icon: Icons.directions_run_rounded,
+        colors: const [Color(0xFF43A047), Color(0xFF00695C)],
         title: 'Maratonista',
         description: 'Correu mais de 42km em um mês',
         isUnlocked: false,
       ),
       BadgeModel(
         id: 'pr_month',
-        emoji: '📈',
+        icon: Icons.trending_up_rounded,
+        colors: const [Color(0xFF00BCD4), Color(0xFF4CAF50)],
         title: 'Em Ascensão',
         description: 'Bateu 5 PRs em um mês',
         isUnlocked: isMe,

@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
+
 class BadgeModel {
   const BadgeModel({
     required this.id,
-    required this.emoji,
+    required this.icon,
+    required this.colors,
     required this.title,
     required this.description,
     required this.isUnlocked,
@@ -9,7 +12,8 @@ class BadgeModel {
   });
 
   final String id;
-  final String emoji;
+  final IconData icon;
+  final List<Color> colors;
   final String title;
   final String description;
   final bool isUnlocked;

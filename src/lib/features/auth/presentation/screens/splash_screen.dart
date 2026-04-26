@@ -12,15 +12,15 @@ class SplashScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
 
-    authState.whenData((user) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (user != null) {
-          context.go(AppRoutes.chat);
-        } else {
-          context.go(AppRoutes.login);
-        }
-      });
-    });
+    void navigate(String route) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => context.go(route));
+    }
+
+    authState.when(
+      data: (user) => navigate(user != null ? AppRoutes.chat : AppRoutes.login),
+      error: (_, __) => navigate(AppRoutes.login),
+      loading: () {},
+    );
 
     return const Scaffold(
       body: Center(

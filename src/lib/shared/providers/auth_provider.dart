@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/data/models/user_model.dart';
 import '../../features/auth/data/repositories/user_firestore_repository.dart';
+import 'global_error_provider.dart';
 
 part 'auth_provider.g.dart';
 
@@ -15,9 +16,14 @@ class AuthState extends _$AuthState {
   Future<UserModel?> build() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser == null) return null;
-    return ref
-        .read(userFirestoreRepositoryProvider)
-        .getUser(firebaseUser.uid);
+    try {
+      return await ref
+          .read(userFirestoreRepositoryProvider)
+          .getUser(firebaseUser.uid);
+    } catch (e) {
+      ref.pushError(e);
+      return null;
+    }
   }
 
   Future<void> loginWithFirebaseUser(User firebaseUser) async {
@@ -37,16 +43,20 @@ class AuthState extends _$AuthState {
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    await ref.read(userFirestoreRepositoryProvider).updateProfile(
-          uid,
-          username: username,
-          sports: sports,
-          level: level,
-          avatar: avatar,
-        );
-    state = AsyncData(
-      await ref.read(userFirestoreRepositoryProvider).getUser(uid),
-    );
+    try {
+      await ref.read(userFirestoreRepositoryProvider).updateProfile(
+            uid,
+            username: username,
+            sports: sports,
+            level: level,
+            avatar: avatar,
+          );
+      state = AsyncData(
+        await ref.read(userFirestoreRepositoryProvider).getUser(uid),
+      );
+    } catch (e) {
+      ref.pushError(e);
+    }
   }
 
   Future<void> logout() async {

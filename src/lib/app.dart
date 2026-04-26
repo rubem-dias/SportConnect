@@ -6,6 +6,7 @@ import 'core/env/env.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
+import 'shared/widgets/global_error_listener.dart';
 
 class SportConnectApp extends ConsumerWidget {
   const SportConnectApp({required this.flavor, super.key});
@@ -30,7 +31,7 @@ class SportConnectApp extends ConsumerWidget {
             mediaQuery.textScaler.clamp(maxScaleFactor: 1.3);
         return MediaQuery(
           data: mediaQuery.copyWith(textScaler: clampedScale),
-          child: child!,
+          child: GlobalErrorListener(child: child!),
         );
       },
       localizationsDelegates: const [

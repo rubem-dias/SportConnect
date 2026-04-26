@@ -25,7 +25,7 @@ class UserFirestoreRepository {
     if (doc.exists) {
       return UserModel.fromJson({
         'id': firebaseUser.uid,
-        ...doc.data()!,
+        ..._normalize(doc.data()!),
       });
     }
 
@@ -54,7 +54,15 @@ class UserFirestoreRepository {
   Future<UserModel?> getUser(String uid) async {
     final doc = await _users.doc(uid).get();
     if (!doc.exists) return null;
-    return UserModel.fromJson({'id': uid, ...doc.data()!});
+    return UserModel.fromJson({'id': uid, ..._normalize(doc.data()!)});
+  }
+
+  Map<String, dynamic> _normalize(Map<String, dynamic> data) {
+    final createdAt = data['createdAt'];
+    if (createdAt is Timestamp) {
+      return {...data, 'createdAt': createdAt.toDate().toIso8601String()};
+    }
+    return data;
   }
 
   Future<void> updateProfile(

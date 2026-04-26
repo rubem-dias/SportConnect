@@ -7,10 +7,12 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/providers/auth_provider.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_loading_skeleton.dart';
-import '../../../feed/data/models/post_model.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../notifications/presentation/providers/notifications_provider.dart';
+import '../../../prs/data/models/pr_model.dart';
 import '../../data/models/user_profile_model.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/edit_profile_sheet.dart';
@@ -45,7 +47,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-      data: (profile) => _ProfileContent(
+      data: (profile) => _ProfileBody(
         profile: profile,
         profileId: resolvedId,
       ),
@@ -53,100 +55,94 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-// ── Content ───────────────────────────────────────────────────────────────────
+// ── Body ──────────────────────────────────────────────────────────────────────
 
-class _ProfileContent extends ConsumerStatefulWidget {
-  const _ProfileContent({
-    required this.profile,
-    required this.profileId,
-  });
+class _ProfileBody extends ConsumerWidget {
+  const _ProfileBody({required this.profile, required this.profileId});
 
   final UserProfileModel profile;
   final String profileId;
 
   @override
-  ConsumerState<_ProfileContent> createState() => _ProfileContentState();
-}
-
-class _ProfileContentState extends ConsumerState<_ProfileContent>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current =
+        ref.watch(profileProvider(profileId)).valueOrNull ?? profile;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final profile =
-        ref.watch(profileProvider(widget.profileId)).valueOrNull ??
-            widget.profile;
 
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          _ProfileSliverAppBar(
-            profile: profile,
-            profileId: widget.profileId,
+      body: CustomScrollView(
+        slivers: [
+          _ProfileSliverHeader(
+            profile: current,
+            profileId: profileId,
             isDark: isDark,
-            innerBoxIsScrolled: innerBoxIsScrolled,
           ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _TabBarDelegate(
-              tabController: _tabController,
-              isDark: isDark,
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.sm),
+
+                // Action buttons (other user only)
+                if (!current.isMe) ...[
+                  _ActionButtons(profile: current, profileId: profileId),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+
+                // Info section
+                _InfoSection(profile: current, isDark: isDark),
+                const SizedBox(height: AppSpacing.sm),
+
+                // PRs section
+                _PRsSection(userId: profileId, isDark: isDark),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Badges section
+                _BadgesSection(badges: current.badges, isDark: isDark),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Settings (own profile)
+                if (current.isMe) ...[
+                  _SettingsSection(profile: current, profileId: profileId),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Logout
+                  _LogoutSection(),
+                ],
+
+                const SizedBox(height: AppSpacing.xxl),
+              ],
             ),
           ),
         ],
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _PostsTab(userId: widget.profileId),
-            _PRsTab(userId: widget.profileId),
-            _BadgesTab(badges: profile.badges),
-          ],
-        ),
       ),
     );
   }
 }
 
-// ── Sliver AppBar ─────────────────────────────────────────────────────────────
+// ── Sliver Header ─────────────────────────────────────────────────────────────
 
-class _ProfileSliverAppBar extends ConsumerWidget {
-  const _ProfileSliverAppBar({
+class _ProfileSliverHeader extends ConsumerWidget {
+  const _ProfileSliverHeader({
     required this.profile,
     required this.profileId,
     required this.isDark,
-    required this.innerBoxIsScrolled,
   });
 
   final UserProfileModel profile;
   final String profileId;
   final bool isDark;
-  final bool innerBoxIsScrolled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SliverAppBar(
+      expandedHeight: 260,
       pinned: true,
-      expandedHeight: profile.isMe ? 270 : 290,
-      backgroundColor:
-          isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+      stretch: true,
+      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
       surfaceTintColor: Colors.transparent,
-      elevation: innerBoxIsScrolled ? 2 : 0,
       leading: profile.isMe
           ? null
           : IconButton(
@@ -183,8 +179,7 @@ class _ProfileSliverAppBar extends ConsumerWidget {
                   children: [
                     Icon(Icons.block_rounded, color: AppColors.error),
                     SizedBox(width: 8),
-                    Text('Bloquear',
-                        style: TextStyle(color: AppColors.error)),
+                    Text('Bloquear', style: TextStyle(color: AppColors.error)),
                   ],
                 ),
               ),
@@ -192,12 +187,875 @@ class _ProfileSliverAppBar extends ConsumerWidget {
           ),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: _ProfileHeader(
-          profile: profile,
-          profileId: profileId,
+        centerTitle: true,
+        titlePadding: const EdgeInsets.only(bottom: 14),
+        title: Text(
+          profile.name,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        background: _HeaderBackground(profile: profile, isDark: isDark),
+      ),
+    );
+  }
+}
+
+class _HeaderBackground extends StatelessWidget {
+  const _HeaderBackground({required this.profile, required this.isDark});
+
+  final UserProfileModel profile;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Gradient background
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withAlpha(isDark ? 80 : 50),
+                isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        // Avatar + name
+        Positioned.fill(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 32),
+              _Avatar(avatar: profile.avatar, radius: 52),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                profile.name,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                profile.username,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.avatar, required this.radius});
+
+  final String? avatar;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withAlpha(60),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primary.withAlpha(40),
+        backgroundImage: avatar != null ? NetworkImage(avatar!) : null,
+        child: avatar == null
+            ? Icon(Icons.person_rounded,
+                size: radius * 0.8, color: AppColors.primary)
+            : null,
+      ),
+    );
+  }
+}
+
+// ── Action buttons (outros usuários) ─────────────────────────────────────────
+
+class _ActionButtons extends ConsumerWidget {
+  const _ActionButtons({required this.profile, required this.profileId});
+
+  final UserProfileModel profile;
+  final String profileId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current =
+        ref.watch(profileProvider(profileId)).valueOrNull ?? profile;
+
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: current.isFollowing
+                    ? OutlinedButton.icon(
+                        onPressed: () => ref
+                            .read(profileProvider(profileId).notifier)
+                            .unfollow(),
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Seguindo'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      )
+                    : FilledButton.icon(
+                        onPressed: () =>
+                            ref.read(profileProvider(profileId).notifier).follow(),
+                        icon: const Icon(Icons.person_add_rounded, size: 18),
+                        label: const Text('Seguir'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 44),
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.push(AppRoutes.chatConversationPath(profileId)),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                label: const Text('Mensagem'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+          if (current.isNearby) ...[
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => AppSnackbar.info(
+                    context, 'Solicitação enviada para ${current.name}!'),
+                icon: const Icon(Icons.fitness_center_rounded, size: 18),
+                label: const Text('Treinar junto'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  foregroundColor: AppColors.secondary,
+                  side: const BorderSide(color: AppColors.secondary),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Info section ──────────────────────────────────────────────────────────────
+
+class _InfoSection extends StatelessWidget {
+  const _InfoSection({required this.profile, required this.isDark});
+
+  final UserProfileModel profile;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasBio = profile.bio != null && profile.bio!.isNotEmpty;
+    final hasSports = profile.sports.isNotEmpty;
+
+    if (!hasBio && !hasSports) return const SizedBox.shrink();
+
+    return _SectionCard(
+      isDark: isDark,
+      children: [
+        if (hasBio)
+          _InfoRow(
+            icon: Icons.info_outline_rounded,
+            isDark: isDark,
+            child: Text(
+              profile.bio!,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+                height: 1.4,
+              ),
+            ),
+          ),
+        if (hasBio && hasSports) _Divider(isDark: isDark),
+        if (hasSports)
+          _InfoRow(
+            icon: Icons.sports_rounded,
+            isDark: isDark,
+            child: Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: profile.sports
+                  .map((s) => AppBadge(label: s))
+                  .toList(),
+            ),
+          ),
+        _Divider(isDark: isDark),
+        _InfoRow(
+          icon: Icons.trending_up_rounded,
           isDark: isDark,
+          child: Text(
+            _levelLabel(profile.level),
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _levelLabel(String level) {
+    switch (level) {
+      case 'beginner':
+        return 'Iniciante';
+      case 'intermediate':
+        return 'Intermediário';
+      case 'advanced':
+        return 'Avançado';
+      default:
+        return level;
+    }
+  }
+}
+
+// ── PRs section ───────────────────────────────────────────────────────────────
+
+class _PRsSection extends ConsumerWidget {
+  const _PRsSection({required this.userId, required this.isDark});
+
+  final String userId;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prsAsync = ref.watch(userPRsProvider(userId));
+
+    return prsAsync.when(
+      loading: () => _SectionCard(
+        isDark: isDark,
+        header: _SectionHeader(
+            title: 'Melhores PRs', icon: Icons.emoji_events_rounded, isDark: isDark),
+        children: List.generate(
+          3,
+          (_) => Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+            child: Row(
+              children: [
+                const AppLoadingSkeleton(width: 40, height: 40, borderRadius: 20),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const AppLoadingSkeleton(height: 13, borderRadius: 4),
+                      const SizedBox(height: 5),
+                      AppLoadingSkeleton(
+                          width: 80, height: 11, borderRadius: 4),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (prs) {
+        if (prs.isEmpty) return const SizedBox.shrink();
+        final preview = prs.take(3).toList();
+        return _SectionCard(
+          isDark: isDark,
+          header: _SectionHeader(
+              title: 'Melhores PRs',
+              icon: Icons.emoji_events_rounded,
+              isDark: isDark),
+          children: [
+            ...preview.map((s) => _PRRow(pr: s, isDark: isDark)),
+            if (prs.length > 3)
+              _SeeMoreTile(
+                label: 'Ver todos os PRs',
+                isDark: isDark,
+                onTap: () => context.push(AppRoutes.prs),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PRRow extends StatelessWidget {
+  const _PRRow({required this.pr, required this.isDark});
+
+  final ExercisePRSummary pr;
+  final bool isDark;
+
+  String _muscleEmoji(String group) {
+    switch (group.toLowerCase()) {
+      case 'peito':
+        return '💪';
+      case 'costas':
+        return '🔙';
+      case 'pernas':
+        return '🦵';
+      case 'ombro':
+        return '🏋️';
+      case 'cardio':
+        return '🏃';
+      default:
+        return '💪';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 2),
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundColor: AppColors.primary.withAlpha(30),
+        child: Text(_muscleEmoji(pr.muscleGroup),
+            style: const TextStyle(fontSize: 16)),
+      ),
+      title: Text(
+        pr.exerciseName,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        pr.muscleGroup,
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
+        ),
+      ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            pr.bestPR.displayValue,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+              fontSize: 15,
+            ),
+          ),
+          if (pr.isRecentPR)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.prGreen,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Novo!',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Badges section ────────────────────────────────────────────────────────────
+
+class _BadgesSection extends StatelessWidget {
+  const _BadgesSection({required this.badges, required this.isDark});
+
+  final List<BadgeModel> badges;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    final unlocked = badges.where((b) => b.isUnlocked).toList();
+    final locked = badges.where((b) => !b.isUnlocked).toList();
+    final sorted = [...unlocked, ...locked];
+
+    return _SectionCard(
+      isDark: isDark,
+      header: _SectionHeader(
+        title: 'Conquistas',
+        icon: Icons.military_tech_rounded,
+        isDark: isDark,
+        trailing: '${unlocked.length}/${badges.length}',
+      ),
+      children: [
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+            scrollDirection: Axis.horizontal,
+            itemCount: sorted.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+            itemBuilder: (context, i) =>
+                _BadgeChip(badge: sorted[i], isDark: isDark, onTap: () => _showBadgeInfo(context, sorted[i])),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip(
+      {required this.badge, required this.isDark, required this.onTap});
+
+  final BadgeModel badge;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        opacity: badge.isUnlocked ? 1 : 0.35,
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          width: 72,
+          decoration: BoxDecoration(
+            color: badge.isUnlocked
+                ? AppColors.primary.withAlpha(20)
+                : (isDark
+                    ? AppColors.surfaceVariantDark
+                    : AppColors.surfaceVariantLight),
+            borderRadius: BorderRadius.circular(12),
+            border: badge.isUnlocked
+                ? Border.all(color: AppColors.primary.withAlpha(80))
+                : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(badge.emoji, style: const TextStyle(fontSize: 26)),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  badge.title,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: badge.isUnlocked
+                        ? (isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight)
+                        : (isDark
+                            ? AppColors.textDisabledDark
+                            : AppColors.textDisabledLight),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showBadgeInfo(BuildContext context, BadgeModel badge) {
+  showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Row(
+        children: [
+          Text(badge.emoji, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(badge.title)),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(badge.description),
+          if (badge.isUnlocked && badge.unlockedAt != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Desbloqueado em '
+              '${badge.unlockedAt!.day.toString().padLeft(2, '0')}/'
+              '${badge.unlockedAt!.month.toString().padLeft(2, '0')}/'
+              '${badge.unlockedAt!.year}',
+              style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13),
+            ),
+          ] else if (!badge.isUnlocked)
+            const Text(
+              'Ainda bloqueado',
+              style: TextStyle(color: AppColors.textDisabledLight),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fechar'),
+        ),
+      ],
+    ),
+  );
+}
+
+// ── Settings section (own profile) ───────────────────────────────────────────
+
+class _SettingsSection extends StatelessWidget {
+  const _SettingsSection({required this.profile, required this.profileId});
+
+  final UserProfileModel profile;
+  final String profileId;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return _SectionCard(
+      isDark: isDark,
+      children: [
+        _SettingsTile(
+          icon: Icons.edit_rounded,
+          label: 'Editar perfil',
+          isDark: isDark,
+          onTap: () => showEditProfileSheet(context, profile, profileId),
+        ),
+        _Divider(isDark: isDark),
+        _SettingsTile(
+          icon: Icons.notifications_outlined,
+          label: 'Notificações',
+          isDark: isDark,
+          onTap: () => context.push(AppRoutes.notificationSettings),
+        ),
+        _Divider(isDark: isDark),
+        _SettingsTile(
+          icon: Icons.qr_code_rounded,
+          label: 'Meu QR Code',
+          isDark: isDark,
+          onTap: () => _showQrSheet(context, profile.username),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+class _LogoutSection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return _SectionCard(
+      isDark: isDark,
+      children: [
+        _SettingsTile(
+          icon: Icons.logout_rounded,
+          label: 'Sair',
+          color: AppColors.error,
+          isDark: isDark,
+          onTap: () => _confirmLogout(context, ref),
+        ),
+      ],
+    );
+  }
+
+  void _confirmLogout(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sair'),
+        content: const Text('Tem certeza que deseja sair da sua conta?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(authStateProvider.notifier).logout();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Shared building blocks ────────────────────────────────────────────────────
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.isDark,
+    required this.children,
+    this.header,
+  });
+
+  final bool isDark;
+  final List<Widget> children;
+  final Widget? header;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (header != null) header!,
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+    required this.isDark,
+    this.trailing,
+  });
+
+  final String title;
+  final IconData icon;
+  final bool isDark;
+  final String? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(icon,
+              size: 16,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+              letterSpacing: 0.5,
+            ),
+          ),
+          if (trailing != null) ...[
+            const Spacer(),
+            Text(
+              trailing!,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.icon, required this.isDark, required this.child});
+
+  final IconData icon;
+  final bool isDark;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon,
+              size: 20,
+              color: AppColors.primary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isDark;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = color ??
+        (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: effectiveColor),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: effectiveColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (color == null)
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeeMoreTile extends StatelessWidget {
+  const _SeeMoreTile(
+      {required this.label, required this.isDark, required this.onTap});
+
+  final String label;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded,
+                size: 18, color: AppColors.primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  const _Divider({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      indent: AppSpacing.lg + 20 + AppSpacing.md,
+      color: isDark ? AppColors.borderDark : AppColors.borderLight,
     );
   }
 }
@@ -227,7 +1085,6 @@ void _showQrSheet(BuildContext context, String username) {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
           Container(
             width: 40,
             height: 4,
@@ -248,7 +1105,6 @@ void _showQrSheet(BuildContext context, String username) {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          // QR Code
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
@@ -328,10 +1184,7 @@ void _showQrSheet(BuildContext context, String username) {
               ),
               const SizedBox(width: AppSpacing.md),
               ElevatedButton.icon(
-                onPressed: () {
-                  // Share via sistema — integração futura com share_plus
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.share_rounded, size: 18),
                 label: const Text('Compartilhar'),
                 style: ElevatedButton.styleFrom(
@@ -354,699 +1207,6 @@ void _showQrSheet(BuildContext context, String username) {
   );
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
-class _ProfileHeader extends ConsumerWidget {
-  const _ProfileHeader({
-    required this.profile,
-    required this.profileId,
-    required this.isDark,
-  });
-
-  final UserProfileModel profile;
-  final String profileId;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current =
-        ref.watch(profileProvider(profileId)).valueOrNull ?? profile;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.lg + 48,
-          AppSpacing.lg,
-          AppSpacing.sm,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 38,
-                  backgroundColor: AppColors.primary.withAlpha(40),
-                  backgroundImage: current.avatar != null
-                      ? NetworkImage(current.avatar!)
-                      : null,
-                  child: current.avatar == null
-                      ? const Icon(Icons.person_rounded,
-                          size: 38, color: AppColors.primary)
-                      : null,
-                ),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _StatColumn(label: 'Posts', value: current.postsCount),
-                      _StatColumn(
-                          label: 'Seguidores', value: current.followersCount),
-                      _StatColumn(
-                          label: 'Seguindo', value: current.followingCount),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              current.name,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ),
-            ),
-            Text(
-              current.username,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-            ),
-            if (current.bio != null && current.bio!.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                current.bio!,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                  height: 1.4,
-                ),
-              ),
-            ],
-            if (current.sports.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.xs,
-                children: current.sports.map((s) => AppBadge(label: s)).toList(),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.md),
-            if (current.isMe)
-              _EditProfileButton(profile: current, profileId: profileId)
-            else
-              _OtherUserActions(profile: current, profileId: profileId),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatColumn extends StatelessWidget {
-  const _StatColumn({required this.label, required this.value});
-
-  final String label;
-  final int value;
-
-  String _fmt(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      children: [
-        Text(
-          _fmt(value),
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EditProfileButton extends StatelessWidget {
-  const _EditProfileButton({required this.profile, required this.profileId});
-
-  final UserProfileModel profile;
-  final String profileId;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: () => showEditProfileSheet(context, profile, profileId),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.primary),
-          foregroundColor: AppColors.primary,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: const Text('Editar Perfil'),
-      ),
-    );
-  }
-}
-
-class _OtherUserActions extends ConsumerWidget {
-  const _OtherUserActions({required this.profile, required this.profileId});
-
-  final UserProfileModel profile;
-  final String profileId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current =
-        ref.watch(profileProvider(profileId)).valueOrNull ?? profile;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: current.isFollowing
-                  ? OutlinedButton(
-                      onPressed: () => ref
-                          .read(profileProvider(profileId).notifier)
-                          .unfollow(),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.borderDark
-                                    : AppColors.borderLight),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Seguindo'),
-                    )
-                  : ElevatedButton(
-                      onPressed: () =>
-                          ref.read(profileProvider(profileId).notifier).follow(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Seguir'),
-                    ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            OutlinedButton.icon(
-              onPressed: () =>
-                  context.push(AppRoutes.chatConversationPath(profileId)),
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: const Text('Mensagem'),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primary),
-                foregroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ],
-        ),
-        if (current.isNearby) ...[
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            onPressed: () => _showTrainTogetherConfirm(context),
-            icon: const Icon(Icons.fitness_center_rounded, size: 16),
-            label: const Text('Treinar junto'),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.secondary),
-              foregroundColor: AppColors.secondary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  void _showTrainTogetherConfirm(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Solicitação enviada para ${profile.name}!'),
-        backgroundColor: AppColors.secondary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-}
-
-// ── Tab bar delegate ──────────────────────────────────────────────────────────
-
-class _TabBarDelegate extends SliverPersistentHeaderDelegate {
-  const _TabBarDelegate({required this.tabController, required this.isDark});
-
-  final TabController tabController;
-  final bool isDark;
-
-  @override
-  double get minExtent => 46;
-  @override
-  double get maxExtent => 46;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      child: TabBar(
-        controller: tabController,
-        labelColor: AppColors.primary,
-        unselectedLabelColor: isDark
-            ? AppColors.textSecondaryDark
-            : AppColors.textSecondaryLight,
-        indicatorColor: AppColors.primary,
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: isDark ? AppColors.borderDark : AppColors.borderLight,
-        tabs: const [
-          Tab(icon: Icon(Icons.grid_on_rounded, size: 20)),
-          Tab(icon: Icon(Icons.emoji_events_rounded, size: 20)),
-          Tab(icon: Icon(Icons.military_tech_rounded, size: 20)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_TabBarDelegate oldDelegate) => false;
-}
-
-// ── Posts tab ─────────────────────────────────────────────────────────────────
-
-class _PostsTab extends ConsumerWidget {
-  const _PostsTab({required this.userId});
-
-  final String userId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final postsAsync = ref.watch(userPostsProvider(userId));
-
-    return postsAsync.when(
-      loading: () => GridView.builder(
-        padding: const EdgeInsets.all(1),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: 1,
-          crossAxisSpacing: 1,
-        ),
-        itemCount: 9,
-        itemBuilder: (_, __) =>
-            const AppLoadingSkeleton(height: double.infinity),
-      ),
-      error: (_, __) =>
-          const Center(child: Text('Erro ao carregar posts')),
-      data: (posts) {
-        if (posts.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.photo_library_outlined,
-                    size: 48, color: AppColors.textDisabledLight),
-                SizedBox(height: AppSpacing.md),
-                Text('Nenhum post ainda'),
-              ],
-            ),
-          );
-        }
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(1),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 1,
-            crossAxisSpacing: 1,
-          ),
-          itemCount: posts.length,
-          itemBuilder: (_, i) => _PostThumbnail(post: posts[i], isDark: isDark),
-        );
-      },
-    );
-  }
-}
-
-class _PostThumbnail extends StatelessWidget {
-  const _PostThumbnail({required this.post, required this.isDark});
-
-  final PostModel post;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final isPR = post.prData != null;
-
-    if (post.mediaUrls.isNotEmpty) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(
-            post.mediaUrls.first,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: isDark
-                  ? AppColors.surfaceVariantDark
-                  : AppColors.surfaceVariantLight,
-            ),
-          ),
-          if (post.mediaUrls.length > 1)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Icon(Icons.copy_all_rounded,
-                    size: 12, color: Colors.white),
-              ),
-            ),
-        ],
-      );
-    }
-
-    return Container(
-      color: isPR
-          ? AppColors.prGreen.withAlpha(30)
-          : (isDark
-              ? AppColors.surfaceVariantDark
-              : AppColors.surfaceVariantLight),
-      child: Center(
-        child: isPR
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('🏆', style: TextStyle(fontSize: 24)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs),
-                    child: Text(
-                      post.prData!['exercise']?.toString() ?? 'PR',
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.prGreen),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              )
-            : Icon(
-                Icons.format_quote_rounded,
-                color: isDark
-                    ? AppColors.textDisabledDark
-                    : AppColors.textDisabledLight,
-              ),
-      ),
-    );
-  }
-}
-
-// ── PRs tab ───────────────────────────────────────────────────────────────────
-
-class _PRsTab extends ConsumerWidget {
-  const _PRsTab({required this.userId});
-
-  final String userId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final prsAsync = ref.watch(userPRsProvider(userId));
-
-    return prsAsync.when(
-      loading: () => ListView.builder(
-        itemCount: 5,
-        itemBuilder: (_, __) => const Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-          child: Row(
-            children: [
-              AppLoadingSkeleton(
-                  width: 44, height: 44, borderRadius: 22),
-              SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppLoadingSkeleton(height: 14, borderRadius: 4),
-                    SizedBox(height: 6),
-                    AppLoadingSkeleton(
-                        width: 100, height: 12, borderRadius: 4),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      error: (_, __) => const Center(child: Text('Erro ao carregar PRs')),
-      data: (prs) {
-        if (prs.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.emoji_events_outlined,
-                    size: 48, color: AppColors.textDisabledLight),
-                SizedBox(height: AppSpacing.md),
-                Text('Nenhum PR registrado'),
-              ],
-            ),
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          itemCount: prs.length,
-          separatorBuilder: (_, __) => Divider(
-            height: 1,
-            indent: 68,
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          ),
-          itemBuilder: (_, i) {
-            final s = prs[i];
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withAlpha(30),
-                child: Text(
-                  _muscleEmoji(s.muscleGroup),
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ),
-              title: Text(s.exerciseName,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(s.muscleGroup),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    s.bestPR.displayValue,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                      fontSize: 15,
-                    ),
-                  ),
-                  if (s.isRecentPR)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: AppColors.prGreen,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Novo PR!',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  String _muscleEmoji(String group) {
-    switch (group.toLowerCase()) {
-      case 'peito':
-        return '💪';
-      case 'costas':
-        return '🔙';
-      case 'pernas':
-        return '🦵';
-      case 'ombro':
-        return '🏋️';
-      case 'cardio':
-        return '🏃';
-      default:
-        return '💪';
-    }
-  }
-}
-
-// ── Badges tab ────────────────────────────────────────────────────────────────
-
-class _BadgesTab extends StatelessWidget {
-  const _BadgesTab({required this.badges});
-
-  final List<BadgeModel> badges;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: AppSpacing.md,
-        crossAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: badges.length,
-      itemBuilder: (context, i) {
-        final badge = badges[i];
-        return GestureDetector(
-          onTap: () => _showBadgeInfo(context, badge),
-          child: AnimatedOpacity(
-            opacity: badge.isUnlocked ? 1 : 0.35,
-            duration: const Duration(milliseconds: 300),
-            child: Container(
-              decoration: BoxDecoration(
-                color: badge.isUnlocked
-                    ? AppColors.primary.withAlpha(20)
-                    : (isDark
-                        ? AppColors.surfaceVariantDark
-                        : AppColors.surfaceVariantLight),
-                borderRadius: BorderRadius.circular(12),
-                border: badge.isUnlocked
-                    ? Border.all(color: AppColors.primary.withAlpha(80))
-                    : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(badge.emoji, style: const TextStyle(fontSize: 32)),
-                  const SizedBox(height: AppSpacing.xs),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs),
-                    child: Text(
-                      badge.title,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: badge.isUnlocked
-                            ? (isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight)
-                            : (isDark
-                                ? AppColors.textDisabledDark
-                                : AppColors.textDisabledLight),
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (!badge.isUnlocked) ...[
-                    const SizedBox(height: 2),
-                    const Icon(Icons.lock_rounded,
-                        size: 12, color: AppColors.textDisabledLight),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showBadgeInfo(BuildContext context, BadgeModel badge) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Row(
-          children: [
-            Text(badge.emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(child: Text(badge.title)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(badge.description),
-            if (badge.isUnlocked && badge.unlockedAt != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Desbloqueado em '
-                '${badge.unlockedAt!.day.toString().padLeft(2, '0')}/'
-                '${badge.unlockedAt!.month.toString().padLeft(2, '0')}/'
-                '${badge.unlockedAt!.year}',
-                style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13),
-              ),
-            ] else if (!badge.isUnlocked)
-              const Text(
-                'Ainda bloqueado',
-                style: TextStyle(color: AppColors.textDisabledLight),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 class _ProfileSkeleton extends StatelessWidget {
@@ -1058,55 +1218,69 @@ class _ProfileSkeleton extends StatelessWidget {
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 48),
-              Row(
+      body: Column(
+        children: [
+          // Header skeleton
+          Container(
+            height: 260,
+            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 32),
                   const AppLoadingSkeleton(
-                      width: 76, height: 76, borderRadius: 38),
-                  const SizedBox(width: AppSpacing.lg),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(
-                        3,
-                        (_) => const Column(
-                          children: [
-                            AppLoadingSkeleton(
-                                width: 36, height: 18, borderRadius: 4),
-                            SizedBox(height: 4),
-                            AppLoadingSkeleton(
-                                width: 48, height: 12, borderRadius: 4),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                      width: 104, height: 104, borderRadius: 52),
+                  const SizedBox(height: AppSpacing.md),
+                  const AppLoadingSkeleton(
+                      width: 160, height: 20, borderRadius: 6),
+                  const SizedBox(height: 6),
+                  AppLoadingSkeleton(
+                      width: 100, height: 14, borderRadius: 4),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              const AppLoadingSkeleton(
-                  width: 160, borderRadius: 4),
-              const SizedBox(height: 6),
-              const AppLoadingSkeleton(
-                  width: 100, height: 12, borderRadius: 4),
-              const SizedBox(height: 8),
-              const AppLoadingSkeleton(height: 12, borderRadius: 4),
-              const SizedBox(height: 4),
-              const AppLoadingSkeleton(
-                  width: 200, height: 12, borderRadius: 4),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: List.generate(
+                  3,
+                  (i) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md),
+                    child: Row(
+                      children: [
+                        const AppLoadingSkeleton(
+                            width: 20, height: 20, borderRadius: 10),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: AppLoadingSkeleton(
+                              height: 14, borderRadius: 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
+// ── Notifications bell ────────────────────────────────────────────────────────
 
 class _NotificationsBell extends ConsumerWidget {
   const _NotificationsBell({required this.onTap});

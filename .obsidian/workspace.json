@@ -11,10 +11,14 @@
             "id": "6fbd89e334d02e5b",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "brain/nearby.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "nearby"
             }
           }
         ]
@@ -90,6 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "brain/nearby.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -99,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks"
+              "title": "Backlinks for nearby"
             }
           },
           {
@@ -108,11 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "brain/nearby.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links"
+              "title": "Outgoing links from nearby"
             }
           },
           {
@@ -150,12 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "brain/nearby.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of nearby"
             }
           }
         ]
@@ -178,9 +185,10 @@
   },
   "active": "6fbd89e334d02e5b",
   "lastOpenFiles": [
-    "src/readme.md",
-    "agent/specs.md",
     "agent/tasks_translation.md",
+    "agent/specs.md",
+    "Untitled",
+    "src/readme.md",
     "agent/tasks.md",
     "agent",
     "assets/build/app/intermediates/flutter/debug/flutter_assets/packages/flutter_map/lib/assets",
@@ -191,7 +199,6 @@
     "assets/build/app/intermediates/flutter/debug/flutter_assets/fonts",
     "assets/build/app/intermediates/flutter/debug/flutter_assets",
     "assets/build/app/intermediates/flutter/debug",
-    "assets/build/app/intermediates/flutter",
     "brain/backend-api.md",
     "brain/design-system.md",
     "brain/state-management.md",
